@@ -1,0 +1,599 @@
+---
+title: "Banana and _banane_: Cross-language phonological overlap supports bilingual toddlers’ word representations"
+shorttitle: "BILINGUAL TODDLERS’ COGNATE RECOGNITION"
+author:
+  - name          : "Esther Schott"
+    affiliation   : "1,2" 
+  - name          : "Charlotte Moore"
+    affiliation   : "1,2"
+    corresponding : yes
+    address       : "7141 Sherbrooke St. West, Montréal, Québec, Canada, H4B 1R6"
+    email         : "charlotteemma.moore@concordia.ca"
+  - name          : "Krista Byers-Heinlein"
+    affiliation   : "1,2"
+affiliation:
+  - id            : "1"
+    institution   : "Concordia University"
+  - id            : "2"
+    institution   : "Centre for Research on Brain, Language and Music"
+authornote: |
+  Data, materials, and code availability statement: All materials, data and code for this manuscript can be found at https://osf.io/n9uv4/. 
+  Funding statement: This work was supported by a grant from the Natural Sciences and Engineering Research Council of Canada (NSERC; Grant #  402470-2011 and 2018-04390),  support from the Concordia University Research Chairs program to KBH, a fellowship from the Fonds de Recherche du Québec – Société et Culture and Concordia University to ES, and a postdoctoral fellowship from the Social Sciences and Humanities Research Council to CM.
+  Conflict of interest disclosure: The authors declare no conflicts of interest.
+  Ethics approval: This research has been approved by the Human Research Ethics Board of Concordia University (certificate no: #10000439).
+  Acknowledgments: We would like to thank the participating infants and their families, as well as past and present members of the Concordia Infant Research Lab.
+abstract: |
+    Young bilinguals need to learn words in both their languages while navigating two sets of speech sounds. Evidence is mixed as to whether this impacts their encoding of fine phonological detail in words. We used a mispronunciation paradigm to test bilinguals’ and monolinguals’ encoding of phonological detail, using cognate (e.g. banana - *banane*) and non-cognate words (e.g. apple - *pomme*) to examine the effect of cross-language phonological overlap. We tested a total of 51 French-English bilingual and English monolingual 24- to 36-month-olds on their recognition of correctly-pronounced and mispronounced familiar words using a looking-while-listening task. In a growth curve analysis, we found that bilinguals showed sensitivity to mispronounced cognate words, but not to mispronounced non-cognate words. This pattern suggests that words with high cross-language phonological overlap have more detailed phonological representations. Our results suggest that bilingual toddlers leverage cross-language phonological overlap to build highly-specified sound representations for cognates earlier than for non-cognates. Studying bilingual learners provides a unique lens for understanding the complex interplay between language experience and phonological representation.
+keywords          : "bilingual language acquisition; word recognition; mental lexicon, cross-language phonological overlap, phonological representation"
+bibliography      : ["citations.bib"]
+figsintext        : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+lineno            : no
+mask              : no
+class             : "man"
+header-includes   :
+  - \raggedbottom
+  - \usepackage{fontspec}
+  - \usepackage{lscape}
+output            : papaja::apa6_word
+      
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: sentence
+---
+
+# Highlights
+
+-	Toddlers showed robust word comprehension across groups and conditions.
+-	Monolingual toddlers were sensitive to all tested mispronunciations.
+-	Bilingual toddlers were sensitive to mispronunciations only in cognates.
+-	Bilinguals develop detailed sound representations earlier for cognates.
+
+
+```{r load_packages, include = FALSE}
+library("papaja")
+library("knitr")
+library("broom")
+library("tidyverse")
+library("linguisticsdown")
+library("scales")
+library("kableExtra")
+library("feather")
+library("here")
+```
+
+```{r set-options}
+knitr::opts_chunk$set(fig.width = 7, fig.height = 5, comment = F, message = F, hide = T, warning = F, echo = F)
+```
+
+```{r load-eye-data, results='hide'}
+knit(here("scripts/cm4_eyetracking_analysis.Rmd"), quiet = TRUE)
+```
+
+#Introduction
+
+Bilingual word learning is unique in that children need to learn two words for every concept – one in each of their languages. Words across bilinguals’ languages can vary in how much they resemble each other: some translation equivalents (i.e. cross-language synonyms) sound very similar (e.g., English banana [/bəˈnæ.nə/] and French *banane* [/ba.nan/]) while others sound distinct (e.g., English apple and French pomme). Translation equivalents that sound similar are called cognates: they share an etymological origin, and thus sound and/or are spelled similarly. We focus on overlap in sound as opposed to spelling, as we are interested in pre-literate children who are thus unaffected by orthography. Cognates exist on a continuum from (almost) identical to distantly related; some cognates sound quite similar (e.g., carrot - carotte), while others sound less similar (e.g., brush - brosse). Language pairs vary in how many cognates they share: some languages share many cognates (e.g., Spanish and Catalan), and others share fewer cognates (e.g., English and Mandarin). Bilinguals must learn that similar-sounding variants refer to the same referent, e.g. both “banana” and “*banane*” are correct forms to reference the yellow fruit. 
+
+To understand how phonological overlap might affect early word representations, we tested 24- to 30-month-old French-English bilinguals' comprehension of correctly pronounced and mispronounced cognates and non-cognates. We also tested monolingual English-learning toddlers, who served as a comparison group. French and English are from different language families and consequently have dissimilar sound systems, yet centuries of contact between the two languages have led to a fair number of shared cognate words [@schepensDistributionsCognatesEurope2012]. Thus, French and English cognates typically have partial phonological overlap but rarely sound identical. This allowed us to examine whether toddlers detect the imperfect correspondence between words that share a meaning across their languages, and how this in turn might affect their representation of phonetic details in familiar words.
+
+## Coping with Variability in Word Learning and Phonological Representation
+
+When recognizing words, both bilingual and monolingual children have to detect which sound changes are meaningful and which are not. For example, children need to accommodate some phonological changes that do not affect word meaning, such as those resulting from different speakers, intonation, and accents. At the same time, children need to distinguish other phonological changes, such as the vowel difference between “ball” and “bowl”. To test the degree of specificity in infants’ phonological representations, researchers often use a mispronunciation paradigm where infants hear a word that is either correctly pronounced or mispronounced (e.g., dog or *bog) while seeing an image of the target word and a distractor image. Infants’ looking time to the target image across these two conditions is then compared. If infants look to the target object less when they hear the mispronunciation than when they hear the correctly pronounced word, this suggests that they detected the mispronunciation [@swingley11montholdsKnowledgeHow2005]. Thus, in this case, a disruption of word comprehension following a mispronunciation indicates that the infant has a sufficiently detailed representation of the word’s sounds. Many studies have shown that monolingual infants and toddlers notice mispronunciations in these studies [for a meta-analysis, see @vonholzenDevelopmentInfantsResponses2021].
+
+
+There is mixed evidence as to whether navigating two sets of speech sounds impacts bilinguals’ ability to detect mispronunciations, for both familiar and novel words. For familiar words, some mispronunciation detection studies show that bilingual two-year-olds, like monolinguals, are sensitive to mispronunciations [Spanish-Catalan, @ramon-casasAreNonCognateWords2010; English-Mandarin, @singhSensitivityRaceLanguage2020; @wewalaarachchiVowelsConsonantsLexical2017). However, others find that bilingual two-year-olds are not yet sensitive to mispronunciations that vary in a vowel distinction only phonemic in one of the bilinguals' languages [@ramon-casasVowelCategorizationWord2009]. For novel words, results suggest that bilingual toddlers can detect mispronunciations in some situations [@fennellUsingSpeechSounds2007; @fennellYouSoundMommy2014; @mattockFirstStepsWord2010]. One study showed that at 17 months, bilinguals detect some mispronunciations that monolinguals do not [@singhNovelWordLearning2018]. This series of findings suggests that the relationship between language background and mispronunciation detection is complex and may be explained by additional factors [see also @curtinBilingualBeginningsLens2011]. One such factor is cross-language phonological overlap between translation equivalents.
+
+## Processing Cognates versus Non-Cognate Translation Equivalents
+
+Many studies examining differences in processing between cognate and non-cognate translation equivalents have been conducted in adults. These studies often find a “cognate effect”, where processing of cognates is faster compared to non-cognates [@costaCognateFacilitationEffect2000]. Cognate effects in adults are likely caused by both orthographic and phonological overlap between cognates. Compared to our preliterate population of interest, the cognate effect in adults is likely enhanced by their knowledge of orthography. Regardless, findings from the adult literature can illuminate the role that cross-language phonological overlap plays in word recognition. The literature shows that adults read cognates faster than non-cognates [@dijkstraHowCrosslanguageSimilarity2010]. This is thought to occur because orthographic (and phonemic) features of both languages are activated when reading cognates, and this increased activation facilitates processing [@dijkstraArchitectureBilingualWord2002]. Particularly relevant here are studies where the cognate effect cannot be explained by purely orthographic similarity. Cognates exist for languages with different scripts like English and Japanese, e.g., Japanese: レモン /remoN/, English: lemon /ˈlɛmən/). For bilingual adults who speak different-script languages, any cognate effects likely rely on co-activation of phonetic features. And indeed, cognate effects can be found when testing different-script bilinguals [@gollanTranslationPrimingDifferent1997; @nakayamaMaskedTranslationPriming2013; @vogaCognateStatusCrossscript2007; but see @kimTaskEffectsMasked2003), as well as when adults are tested only with only sounds and no script [@andrasCognateFacilitationEffect2022] or only pictures [@costaCognateFacilitationEffect2000]. In summary, cognates benefit from faster activation, suggesting that the phonetic overlap across languages may speed comprehension, at least in adults.
+
+
+While much less studied than adult cognate processing, there are some studies of cognate processing in children which suggest advantages for cognates on different measures and across ages. Studies of school-aged children show that bilinguals read cognates faster than non-cognates [@bosmaCognateFacilitationFrisian2020]; @quirkDevelopmentCognateAdvantageinpress; @schelletterEffectFormSimilarity2002]. In work with pre-literate children, cognates are overrepresented compared to non-cognates in toddlers’ early vocabularies, suggesting that phonological overlap supports word learning [@boschFirstTranslationEquivalents2014; @mitchellCognatesAreAdvantaged2022]. In German toddlers learning English, L2 word recognition was moderated by cross-language phonological overlap [@vonholzenImpactCrosslanguagePhonological2018]. This finding suggests that high cross-language phonological overlap facilitated second language learning, aligning with work showing the same effect in adults [e.g., @degrootWhatHardLearn2000; @rogersCognacyCharacteristicsLoanwords2015]. Further evidence for cognate effects in children comes from a study of English-dominant, Spanish-dominant, and balanced bilingual preschoolers. Children who were more dominant in one language showed a difference in pointing accuracy to cognate and non-cognate words [@perezCognatesFacilitateWord2010]. Thus, much of the previous work looking at cognate effects in children has found an advantage for cognates, particularly for facilitating non-dominant language processing. However, we do not know how cognate effects interact with children’s ability to represent phonological detail and detect mispronunciations.
+
+
+## Phonological Detail in Cognate Representations
+
+Several studies have examined whether bilingual infants represent cognates with the same phonological detail as non-cognates. A series of studies with Spanish-Catalan bilingual toddlers found that for cognate words, 18- to 24-month-olds did not differentiate between correctly pronounced and mispronounced cognate words. In their study, mispronunciations were created by varying each word’s primary vowel between /e/ and /ε/, a sound contrast that is phonemic in Catalan but not Spanish [@ramon-casasVowelCategorizationWord2009]. For non-cognate words, bilingual children did differentiate between correctly pronounced and mispronounced words [@ramon-casasAreNonCognateWords2010]. This pattern suggests that cognates were encoded with less phonological detail for this specific contrast in Spanish-Catalan bilinguals. 
+
+
+To explain such findings, researchers have theorized that when bilingual children first encounter cognates like banana and *banane*, they may initially only encode the shared sounds in detail and underspecify the non-shared sounds, because they encounter two similar-sounding but different wordforms that both need to be considered correct [@ramon-casasAreNonCognateWords2010]. If bilinguals delay building well-specified representations, they could hold out for more information on the sounds in cognates, which would lead to a less detailed word representation for cognates compared to non-cognates in early word learning [see also @ramon-casasMinimalpairWordLearning2017]. 
+
+
+However, it is important to note that both studies that have looked at mispronunciation detection in bilingual toddlers have studied Spanish-Catalan bilinguals, and have focused on mispronunciations with small phonological differences (i.e., the /e/ and /ε/ contrast). For Spanish and Catalan, when looking at a checklist of early-learned Spanish words, 75% of the Spanish words are cognates with Catalan, and many of these cognate pairs are phonologically identical [@boschFirstTranslationEquivalents2014].  In comparison, for English-French, the rate of cognates is only around 25% of all translation equivalents in the English and Quebec French CDI, with few cognate pairs that are phonologically identical [@mitchellCognatesAreAdvantaged2022]. It is important to test whether the finding that bilinguals’ representations of cognates are underspecified generalizes to other mispronunciation types and populations like French-English bilinguals.
+
+## The Current Study
+
+We tested whether French-English bilingual toddlers process cognates differently from non-cognates, and whether their representation of phonological detail is affected by a word’s cognate status.  We chose sets of cognate and non-cognate nouns which were matched on word length and age of acquisition using archival data from our lab as well as CDI norms [@jorgensenCLEXCrosslinguisticLexical2010]. Based on the mean age of acquisition of those words, we decided to test 24- to 30-month-olds. We used an eyetracking looking-while-listening paradigm, where toddlers see two objects on the screen and hear one labelled, and we measured how long toddlers look at the target word compared to overall looking time. We probed toddlers’ representations of phonological detail using a mispronunciation paradigm. On half of the trials, toddlers heard the target word mispronounced, and their looking time to the target was compared to their performance on correctly pronounced trials of the same target word. In this paradigm, toddlers with a more fine-grained encoding of phonological detail should perform worse when hearing mispronunciations compared to correct pronunciations. We tested toddlers on English stimuli only rather than English and French, because creating mispronunciations in English and French that are comparable in magnitude across languages would be difficult to achieve. Thus, presenting stimuli only in English allowed us more experimental control. Half of the mispronunciations were on the vowel in the first syllable of the word, e.g., banana changed to \*boonana, and half were on the onset consonant e.g., giraffe changed to \*viraffe. While several studies postulate that consonants affect word recognition more than vowels [e.g., @hochmannConsonantsVowelsDifferent2011; @poltrockConsonantVowelAsymmetry2015], cognates often vary across languages mostly in their vowels, making it important to test vowel mispronunciations as well.
+
+
+We tested three predictions with our study using a pre-registered analyses. ANOVAs  captured differences in total looking time, and growth curve analyses provided a more sensitive measure of word recognition over time. The first prediction was that bilingual toddlers would be less sensitive to mispronunciations than monolingual toddlers, motivated by prior research on Spanish-Catalan toddlers [@ramon-casasVowelCategorizationWord2009]. We tested this by comparing looking times to the target object when the target was correctly pronounced versus when it was mispronounced. The second prediction was that bilingual toddlers would be less sensitive to mispronunciations for cognate words compared to non-cognate words, as was observed for Spanish-Catalan toddlers [@ramon-casasAreNonCognateWords2010; @ramon-casasVowelCategorizationWord2009]. Finally, we predicted that bilingual toddlers would show better word recognition for cognates compared to non-cognates, as evidenced by longer looking time to the target word on cognate compared to non-cognate trials. This prediction was motivated by adult literature showing cognate effects, as well as evidence from younger children [e.g., @squiresFactorsInfluencingCognate2020; @vonholzenImpactCrosslanguagePhonological2018]. Monolingual English-learning toddlers served as a control group. Monolinguals only have significant experience with one of the labels and thus similarity to a word in an unknown language (here, French) should not impact their word recognition. We expected monolinguals to show longer looking times to the target for correctly pronounced relative to mispronounced trials, indicating detailed phonological encoding for all tested words. We furthermore measured pupil dilation in response to hearing mispronunciations, as an indicator of increased cognitive processing [@siroisPupillometry2014; @tamasiPupillometryRegistersToddlers2017]. The results from this analysis can be found in the supplemental analysis. The preregistration for the current study can be found at <https://osf.io/u4eqc>.
+
+```{r participants}
+# generate values for participants section
+table_1_long <- table_1 %>% pivot_longer(bilingual:monolingual, names_to = "variable", values_to = "value")
+# make nested list for easier in text access
+nestedlist <- lapply(
+  split(table_1_long, table_1_long$variable, drop = TRUE),
+  function(x) split(x, x[["name"]], drop = TRUE)
+)
+# mean language exposure - pivot for easier access to values
+desc_language_long <- desc_language %>% pivot_longer(percent_dominant_mean:percent_nondominant_max)
+# make nested list for easier in text access
+desc_language_nested <- lapply(
+  split(desc_language_long, desc_language_long$lang_group, drop = TRUE),
+  function(x) split(x, x[["name"]], drop = TRUE)
+)
+```
+
+# Method
+
+This study was conducted in accordance with the Declaration of Helsinki and was approved by the Human Research Ethics Board of Concordia University (#10000439). 
+Legal guardians were informed of the study's purpose and procedure, and provided written consent prior to participation.
+
+## Participants
+The final sample consisted of `r nestedlist$bilingual$n$value` bilingual and `r nestedlist$monolingual$n$value` monolingual toddlers aged between 24 and 30 months (see also Table \@ref(tab:desc-sample-table)).
+Participants were recruited from government birth lists as well as a database of interested parents, and were tested between June 2018 and June 2019.
+Our planned sample size was 24 participants per language group, which was chosen because it seemed a feasible number of bilingual participants to test.
+For both groups, we ended up testing more than 24 participants due to a delay between participant recruitment and subsequent checking which participants met inclusion criteria.
+We included all participants in the final analysis who met the pre-registered inclusion criteria.
+
+Toddlers were classified in language groups based on their current and lifetime language exposure from caregivers, elicited from the Language Exposure Questionnaire  [@boschEvidenceEarlyLanguage2001] and the Multilingual Approach to Parent Language Estimates [MAPLE, @byers-heinleinMAPLEMultilingualApproach2020].
+From this information, we calculated an overall percentage of exposure to English and French as well as all other languages in the toddlers' life.
+To be classified as bilingual, participants had to be exposed to at least 25% English and 25% French, and less than 10% of an additional language.
+Bilingual participants in our sample were exposed to their dominant (most heard) language at an average of `r desc_language_nested$bilingual$percent_dominant_mean$value`% (range: `r desc_language_nested$bilingual$percent_dominant_min$value`-`r desc_language_nested$bilingual$percent_dominant_max$value`%), and their non-dominant language at an average of `r desc_language_nested$bilingual$percent_nondominant_mean$value` % (range: `r desc_language_nested$bilingual$percent_nondominant_min$value`-`r desc_language_nested$bilingual$percent_nondominant_max$value`%).
+The dominant language was English for `r desc_language_english %>% filter(lang_group == "bilingual") %>% select(percent_English_dominant) *100` % of bilingual participants. `r printnum(desc_addtl_lang$n, capitalize = T, numerals = F)` bilinguals had exposure to a third language, which was on average `r desc_addtl_lang$mean`% (range: `r desc_addtl_lang$min`-`r desc_addtl_lang$max`%). 
+To be classified as monolingual, toddlers had to be exposed to English at least 90% of the time, and on average were exposed to English at `r desc_language_nested$monolingual$percent_dominant_mean$value`% (range: `r desc_language_nested$monolingual$percent_dominant_min$value`-`r desc_language_nested$monolingual$percent_dominant_max$value`%).
+`r printnum(as.integer(desc_ethnicity_wide$european), capitalize = T, numerals = F)` percent of participants reported being of European descent, `r desc_ethnicity_wide$caribbean`% were Caribbean, and `r desc_ethnicity_wide$multiple_responses`% reported more than one ethnicity. All other categories made up less than 10% of the total number of participants. 
+Maternal education was on average `r printnum(desc_education$mean, digits = 1)` years (SD = `r desc_education$sd`).
+
+To get to this final sample, we tested `r desc_excluded_part$x2_preterm + desc_excluded_part$x4_language` additional participants who turned out to not meet our pre-registered inclusion criteria.
+We excluded participants who were born prematurely at less than 37 weeks or with low birth weight of less than 2500g 
+(N = `r desc_excluded_part$x2_preterm`), and those who did not fit our language criteria (N = `r desc_excluded_part$x4_language`). Two participants (one bilingual, one monolingual) were tested at 31 months 12 days, making them slightly older than our pre-registered age recruitment window of 31 months 7 days, we nevertheless chose to include them in our analysis.  
+Additionally, we screened participants for parent-reported major health issues that may affect their hearing/vision or typical development, but all participants were reported healthy and typically-developing.
+For all participants who met the general criteria for inclusion, we verified that they contributed enough eye tracking data to be included based on pre-registered criteria, and excluded `r printnum(desc_excluded_part$x5_not_enough_data, numerals = F)` participants (`r desc_excluded_part_not_enough_trials$bilingual` bilingual, `r desc_excluded_part_not_enough_trials$monolingual` monolingual) who contributed fewer than two trials in each of the conditions (correctly pronounced cognates, mispronounced cognates, correctly pronounced non-cognates, mispronounced non-cognates).
+
+```{r desc-sample-table}
+
+table_1 %>%
+  filter(name != "mean_eng") %>%
+  add_column(pretty_names = c("n", "Mean age in months (SD)", "Age range in months", "% Girls")) %>%
+  select(pretty_names, bilingual, monolingual) %>%
+  rename(` ` = pretty_names, Bilingual = bilingual, Monolingual = monolingual) %>%
+  apa_table(caption = "Sample Characteristics by Language Group")
+```
+
+## Items
+
+Video stimuli can be found on the Open Science Framework (<https://osf.io/n9uv4/>).
+We chose six English words that had cognate translation equivalents with French and six English words that had non-cognate translation equivalents with French.
+The cognate and non-cognate words can be seen in Table \@ref(tab:stimuli-overview).
+Each word was paired with another to form a target-distractor pair, and over the course of the study each word appeared equally often as a target and as a distractor.
+Cognate and non-cognate words lists were matched on their typical age of acquisition by using archival data from our lab as well as CDI norms [@jorgensenCLEXCrosslinguisticLexical2010] and were matched on syllable and phoneme length as well as age of acquisition based on archival CDI data (see Table \@ref(tab:stimuli-comparison)). Mispronunciations were created by changing a sound in the first syllable of each word (see Table \@ref(tab:stimuli-overview)). Mispronunciations were one or two feature changes, and the size of the mispronunciation was not significantly different for cognates (*M* = `r round(cognate_stimuli_t_test$estimate[[1]],2)`) and non-cognates (*M* = `r round(cognate_stimuli_t_test$estimate[[2]],2)`, `r apa_print(cognate_stimuli_t_test)$statistic`). When creating mispronunciations, we ensured that the word onset was not changed to be similar to the onset of the distractor in either English or French, e.g., if the child saw a bowl and chocolate, the mispronunciation of bowl would not be /ˈt͡ʃoʊl/, that is, using the first sound in chocolate. Half of the mispronunciations affected the onset consonant (e.g., giraffe changed to viraffe), and half affected the first vowel after the onset consonant (e.g., banana changed to boonana). Both consonant and vowel mispronunciations were used, as there is some debate in the literature as to which is more disruptive to word recognition [@dellelucheDifferentialProcessingConsonants2014; @flocciaEnglishlearningOneTwoyearolds2014; @poltrockConsonantVowelAsymmetry2015; @singhNovelWordLearning2018].
+No target words had a vowel onset.
+```{r stimuli-overview}
+# also need to figure out if table can be visually improved in rmd or it needs to be done in word (row height to visually connect word with its IPA)
+
+table_2 <- read_csv(here("data", "trial_info", "Table2_detailed_stimuli.csv")) %>%
+  # some formatting for word doc
+  # remove first column that designate cognates and non-cognates
+  select(-`...1`) %>%
+   # add manual column spanners instead
+  add_row( `English stimulus` = "Cognates", `Mispronunciation stimulus` = "", `French translation` = "", .before = 1) %>%
+  add_row( `English stimulus` = "Non-Cognates", `Mispronunciation stimulus` = "", `French translation` = "", .before = 14)
+
+table_2 %>%
+  apa_table(
+    caption = "English Stimuli, Mispronunciation Stimuli, and French Translations",
+    note = "French translations are included for reference only, all stimuli in the study were presented in English. IPA transcriptions indicated below each word. Words marked with an asterisk are real words in English, chosen due to constraints on creating mispronunciations, but these words are unlikely to be known by toddlers of this age."
+  )
+```
+The mispronunciations were constructed such that the mispronounced word did not form a noun competitor likely to be known to children at this age (i.e., bowl would not be changed to ball).
+However, due to the other constraints on forming mispronunciations, two mispronunciations ended up sounding like existing words (foot - soot and bowl - coal), although these are unlikely to be known to toddlers.
+We tested all children in English instead of creating English and French stimuli because it is difficult to create mispronunciations of comparable magnitude in English and French. This choice provided increased experimental control.
+
+```{r stimuli-comparison}
+# need to fix "% words PRODUCED at 24mo"
+table_stimuli_comparison %>% 
+  filter(Term != "Ave. # of Feature Changes") %>% # is cited in text
+  select(-estimate, -conf.int) %>%
+  # manual column spanners
+mutate(Term = str_remove(Term, " \\(English\\)| \\(French\\)")
+) %>%
+  mutate(Term = str_replace(Term, "known", "produced")) %>%
+    add_row(Term = "English Stimuli", .before = 1) %>%
+  add_row(Term = "French Translations",   .before = 6) %>%
+
+  apa_table(caption = "Means and t-Test Comparison of Cognate and Non-Cognate Words on Key Variables")
+```
+
+
+
+### Audio Stimuli
+Stimuli were recorded by a fluent English-French bilingual female speaker speaking in a Montréal native accent in  English.
+Object labels were recorded in English, both with correct pronunciation (e.g., banana) and with a mispronunciation in the first syllable (e.g., boonana).
+Care was taken when recording that the mispronunciation only affected one sound.
+All stimuli were recorded with the same sentence frame "Look! Find the ...!", and no splicing or editing was applied.
+Each participant's caregiver was asked to identify whether their child understood the word for each item in both French and English. Bilingual participants' rate of understanding for the words used in the study was high in both languages (`r round(words_known_biling$mean_known[1]*100)`% of the English words and `r round(words_known_biling$mean_known[2]*100)`% of the French words were reported to be understood). Monolingual participants' rate of understanding was predictably high in English (`r round(words_known_monoling$mean_known[1]*100)`% of English labels were reported to be understood), but unexpectedly high for the French labels, given that these participants were monolingual English learners (`r round(words_known_monoling$mean_known[2]*100)`% of French labels were reported to be understood). Upon further investigation, this effect was driven by the cognate words: parents reported that monolinguals were reported to understand `r round(monoling_words_cog$mean[1]*100)`% of the French cognates, while only `r round(monoling_words_cog$mean[2]*100)`% of d the non-cognates were reported to be understood. The high similarity between the French and English labels may explain why monolinguals were reported to have such high rates of understanding for cognates, in addition to the ambient French present in Montréal generally. 
+
+### Visual Stimuli
+High-resolution photographs of objects corresponding to cognate and non-cognate items against a light grey background (680×720 px) were used during the study.
+On each trial, two objects were displayed side-by-side on a black background (see Figure  \@ref(fig:trialOverview)).
+Thus, each item was used as both target and distractor on different trials.
+Cognates were paired with cognates, and non-cognates were paired with non-cognates.
+The full set of stimuli can be seen in Table \@ref(tab:stimuli-overview).
+We chose pairings so that for non-cognate words, the onset and rhyme of both the English and French labels were as different as possible.
+Images that were displayed together were processed using a custom Matlab script to equate for luminance, to improve the interpretability of pupil dilation results (see Supplemental Materials for pupil analyses).
+
+
+```{r trialOverview, fig.cap = "Timeline of Trial Structure"}
+knitr::include_graphics(path = "results/figures/cm_trial_structure_figure.png")
+```
+
+## Procedure
+
+Participants were tested in a dimly lit sound-attenuated room.
+Infants sat on their caregiver's lap facing the screen of a Tobii T60-XL eye tracker [@tobiirtechnologyTobiiT60XL2010] that gathered eye-gaze data.
+The caregiver wore darkened sunglasses and listened to music on headphones to minimize their interaction with the infants during the study.
+The experimenter controlled the study from an adjacent room using Tobii Studio software and was unaware of which object was named on each trial.
+Before stimuli presentation, the eye-tracker was calibrated to the participants' eyes using a five-point infant calibration routine.
+A bouncing circle changing in colour and shape was presented before each trial to redirect the infant's gaze to the center of the screen.
+Infants saw 24 trials.
+On each trial, toddlers heard a speaker name one of the objects (the target) on the screen: "Look! Find the chocolate/bowl!".
+Each object served as the target for half of trials (12), and as distractor for the other half of trials.
+
+Mispronounced and correctly pronounced trials as well as cognate and non-cognate naming trails were pseudorandomized such that no more than two trials of the same type appeared consecutively. Half of the targets appeared correctly pronounced first and mispronounced later, and for half it was the opposite order. 
+The location of the target was also counterbalanced such that targets appeared equally on the left and right sides.
+After completing the eye tracking portion of the study, caregivers completed questionnaires on their language mixing practices [@byers-heinleinParentalLanguageMixing2013] and demographic information as part of standard lab practice. Correlations between language measures and total looking to target during the window of interest can be seen in the Supplemental Materials. 
+At the end of the study, caregivers were debriefed on the study, and their child received a certificate and a small toy as a thank you.
+
+# Results
+
+## Looking Time: Analytic Approach
+
+The area of interest for the current study was the 680×720 px area around the target object.
+The dependent variable was toddlers' looking to the area of interest during the pre-registered analysis window of `r eyetracking_start_time`-`r eyetracking_end_time` ms after onset of the target word. ^[We originally pre-registered a window of analysis from 360-2000ms, however combined with binning data into 100ms timebins for the growth curve analysis that would have resulted in a timebins of uneven size, hence we extended the analysis window to 2060 ms for all analyses.]
+As described in the participants section, we removed four participants who did not contribute at least two trials of each of the four trial types (correctly pronounced cognate, mispronounced non-cognate, correctly pronounced non-cognate, mispronounced non-cognate).
+After exclusion, the remaining `r desc_excluded_part$keeper` participants contributed an average of `r trial_summary$mean` (*SD* = `r trial_summary$sd`) out of 24 trials.
+We then compared toddlers' looking to the target to chance, an analysis that was inadvertently omitted from our pre-registration, but that is commonplace analysis in word recognition studies [@vonholzenDevelopmentInfantsResponses2021].
+To investigate how mispronunciations and cognate status affects looking to target, we used both pre-registered ANOVAs and pre-registered growth-curve analyses.
+
+```{r get-t-test-values}
+# get largest t-test value from pre-formatted string result for table
+ttest_p_values <- ttest_chance %>%
+  select(word_type, misp_cond, t_test) %>%
+  # pivot_longer(bilingual_t_test:monolingual_t_test) %>% # make one column of results
+  mutate(p_value = as.numeric(str_extract(t_test, "0\\.[:digit:]{3}$"))) # get only the last number in the string
+max_ttest_chance = ifelse(max(ttest_p_values$p_value) == "0.00", 0.001, max(ttest_p_values$p_value))
+```
+
+## Comparisons to Chance
+
+We compared toddlers' looking to the target object to chance (50% in our two-image display) using two-sided one-sample t-tests.
+We found that both bilinguals and monolinguals looked at the target word above chance, across both correctly pronounced and mispronounced trials, as well as across cognate and non-cognate trials (all *p*s \< `r max_ttest_chance`, see Table \@ref(tab:comparisonChance)).
+This shows that toddlers were able to recognize the target words, and that mispronunciations did not completely hinder children's comprehension.
+
+```{r overall-violin,  fig.cap = "Looking to target for mispronounced and correctly pronounced trials, by group. Black dots with whiskers inside the boxplots show the mean and the standard error of the mean. Violin plots show the distribution of values."}
+knitr::include_graphics(path = "results/figures/cm_overall_looking_violin.png")
+```
+
+```{r comparisonChance}
+
+# for apa, remove repeated labels
+#  but want cognate and non-cognate labels repeated once for monolinguals
+ttest_chance$word_type <- c("cognate", "", "non-cognate", "", "cognate", "", "non-cognate", "")
+# add manual column spanners
+ttest_chance = ttest_chance %>% ungroup %>%
+  add_row(word_type = "Bilinguals", misp_cond = "", t_test = "", .before = 1) %>%
+  add_row(word_type = "Monolinguals", misp_cond = "", t_test = "", .before = 6) %>%
+  select(-lang_group)
+
+ttest_chance %>%
+  rename(
+    "Word Type" = word_type,
+    "Pron." = misp_cond,
+    "Grp. mean" = estimate,
+    "*t*-test" = t_test,
+    "Cohen's *d*" = cohen_d
+  ) %>%
+  apa_table(caption = "Looking Time to Target Compared to Chance, by Group", midrules = 4)
+```
+
+## Looking Time ANOVA
+
+The dependent variable for the ANOVA was toddlers’ looking to the area of interest during the pre-registered analysis window of `r eyetracking_start_time`-`r eyetracking_end_time` ms after onset of the target word divided by their total looking time to the target and distractor. The proportion looking to target averaged across the window of analysis can be seen in Figure \@ref(fig:overall-violin).
+We calculated a 2 × 2 × 2 ANOVA with cognate status (cognate, non-cognate) and mispronunciation (correctly pronounced, mispronounced) as within-subject variables, and language background (monolingual, bilingual) as a between-subjects variable.
+The results can be seen in Table \@ref(tab:anova-looking).
+We found a main effect of mispronunciation (`r anova_looking_apa$statistic$Mispronunciation`), with less looking at the target object for mispronounced (*M* = `r means_eyetracking$mispronounced*100`%) compared to correctly pronounced words (*M* = `r means_eyetracking$correct*100`%).
+There was no main effect of cognate status nor any interaction between cognate status and mispronunciation (all *p*s > `r anova_looking_apa$table %>% filter(str_detect(term, "Cognate")) %>% pull(p.value) %>% min()`), indicating that there was no difference in word recognition between cognate and non-cognate nouns, whether correctly pronounced or mispronounced.
+There was no evidence that language background was related to children's performance, as all main effects and interactions that involved language group were statistically non-significant (all *p*s > `r anova_looking_apa$table %>% filter(str_detect(term, "Language")) %>% pull(p.value) %>% min()`).
+
+
+
+
+
+```{r anova-looking}
+
+anova_looking_apa$table %>%
+  apa_table(caption = "ANOVA on Proportion of Looking to Target")
+```
+
+
+To further compare mispronunciation sensitivity for cognates and non-cognates for bilingual children only, we calculated a 2 × 2 ANOVA with cognate status and mispronunciation as within-subject variables.
+The main effect of mispronunciation was statistically significant (`r anova_result_bil_only_apa$full_result$Mispronunciation`), with less looking at the target for mispronounced (*M* = `r means_eyetracking_bilings$mispronounced*100`%) compared to correctly pronounced words (*M* = `r means_eyetracking_bilings$correct*100`%).
+There was no main effect of cognate status (`r anova_result_bil_only_apa$full_result$Cognate_Status`), indicating that bilingual toddlers did not look more to the target when they heard a cognate compared to a non-cognate noun.
+We found no interaction between cognate status and mispronunciation (`r anova_result_bil_only_apa$full_result$Cognate_Status_Mispronunciation`), thus, this analysis did not provide evidence that cognate status affected bilinguals’ sensitivity to mispronunciations. 
+
+
+## Looking Time Growth Curve Analyses
+
+```{r source-gca, message=FALSE, echo=FALSE, warning=FALSE, results = 'hide'}
+knit(here("scripts/cm6_growth_curves.Rmd"), quiet = TRUE)
+```
+
+To examine how toddlers’ looking to the target unfolded over the course of the trial, we conducted a series of growth curve analyses [@mirmanGrowthCurveAnalysis2014]. One growth curve analysis was pre-registered and is presented in the Supplementary Materials, however in the main text we present models with a less complex fixed-effect structure, which are more straightforward to interpret. Both sets of analyses yielded similar conclusions.
+
+For all models, the analysis window (360-2060ms) was binned into 100ms time bins. Each model used weighted empirical logits. These logits estimate the proportion of participants looking at the target for a given time bin in a given condition. The weights ensured that the ends of the distribution did not have an outsized effect on the model's predictions [@mirmanGrowthCurveAnalysis2014]. Time was represented using 3 orthogonal polynomial terms to best suit the curvilinear structure of the looking data. In all cases, the most parsimonious model which contained all of the theoretically relevant interactions was maintained as the best model. Specific model details are presented in each section below. We present four models to test our questions. The first two models contain either cognate or non-cognate trials, to examine the mispronunciation effect separately in these two word types. The next two models contain trials from either bilinguals or monolinguals, to directly test the cognate effect in these two language groups. In each model, we predicted target looking proportion with a combination of time, language group (monolingual or bilingual), word type (cognate or non-cognate), and/or pronunciation (correctly pronounced or mispronounced).
+
+```{r timecourse-four-conditions, fig.cap= "Smoothed timecourse data showing bilinguals' (top row) and monolinguals' (bottom row) looking trajectories on cognates (left) and non-cognates (right). Confidence bands represent the 95\\% confidence interval. Grey line represents chance looking. Darker trendlines represent correctly pronounced trials, lighter trendlines mispronounced (MP) trials. Dotted vertical line shows beginning of analysis window.", fig.width=6, fig.height=3.5}
+
+timecourse_four_conditions
+```
+
+
+### Mispronunciation Effect in Cognates
+We constructed a model looking at only the cognate word pairs to determine whether bilinguals and monolinguals showed different looking trajectories for correctly pronounced and mispronounced words. The dependent variable was proportion target looking, and the fixed effects included three orthogonal polynomials modelling change over time, the word's pronunciation (correct or mispronounced), and the participant's language group (monolingual or bilingual). We also included random slopes for each subject by item, accounting for participants' differential responses to different specific items. The model equation used was $Target\: looking \sim (time + time^2 + time^3) * pronunciation * lang\:group + (time + time^2 + time^3 | subject:item)$. A summary of the model's fixed effects are presented in Table \@ref(tab:cognate-gca-table).
+
+
+```{r cognate-gca-table}
+apa_table(
+  mod_cognates %>%
+    broom.mixed::tidy() %>%
+    filter(effect == "fixed") %>%
+    mutate(`*p*` = papaja::printp(p.value)) %>%
+    mutate(
+      term = str_replace(term, "ot", "time^"),
+      term = str_replace(term, "misp_condmispronounced", "pron."),
+      term = str_replace(term, "lang_group1", "lang. group"),
+      std.error = round(std.error, 3),
+      df = round(df, 1)
+    ) %>%
+    # filter(p.value < 0.05) %>%
+    rename(
+      "*t* = " = statistic,
+      Term = term,
+      Est. = estimate,
+      SE = std.error
+    ) %>%
+    select(-effect, -group, -p.value),
+  caption = "Fixed effects from a growth curve model predicting looking time based on time, pronunciation, and language group for cognate targets."
+)
+```
+
+
+The intercept represents participants' mean target looking time across the entire analysis window when cognates are correctly pronounced, collapsing across language group. This value was significantly above chance, suggesting that across language groups, participants succeeded at finding correctly-pronounced targets during the analysis window. The linear and quadratic $time$ terms were also significant as a main effect, which suggests that the model captured the curvilinear shape of the looking trajectory over time.^[Cubic time was not significant as a main effect nor was it part of any significant interactions, but its inclusion in the model significantly improved model fit over a model without the cubic term ($\chi^2$ = `r round(anova_cog_ot3_good$statistic[2],2)`, *p* `r papaja::printp(anova_cog_ot3_good$p.value[2])`). It was therefore retained in the final model.]
+
+The effect of $pronunciation$ on target looking was evident in multiple significant effects. First, we found a main effect of $pronunciation$; participants looked less to the target when it was mispronounced compared to when it was correctly pronounced. Second, the interaction between quadratic $time$ and $pronunciation$ further reinforces the finding that participants both looked less to mispronounced targets than to correctly pronounced ones over the course of the trial, and were slower to reach the target when its label was mispronounced.
+
+Pronunciation was also involved in a three-way interaction with linear $time$ and $language\:group$. As shown in the timecourse in Figure \@ref(fig:timecourse-four-conditions), bilinguals were primarily driving the differences we found in slope across conditions: specifically, bilinguals were slower to find the target on mispronounced trials compared to correctly pronounced trials. In contrast, monolinguals had more similar slopes to their looking trajectories in both conditions. The differences in slopes across language groups was also demonstrated by the significant interaction between linear $time$ and $language\:group$.
+
+Notably, we did not find a main effect of language group suggesting that, when hearing cognates, looking time was equivalent for monolinguals and bilinguals across the analysis window. We did however find a significant $pronunciation$ by $language\:group$ interaction; bilinguals showed a stronger response to mispronunciations than bilinguals did. See Figure \@ref(fig:probing-lang-group-by-misp) for a visualisation of the interaction.
+
+### Mispronunciation Effect in Non-Cognates
+
+The model for non-cognates began with the same equation as for cognates described in the section above. However, through model comparison it was determined that the three-way interactions did not explain significant additional variance ($\chi^2$ = `r round(noncog_simpler_better$Chisq[2], 2)`, *p* = `r round(noncog_simpler_better$pval[2], 2)`), and were thus removed, while all two-way interactions were maintained.
+
+Fixed effects are summarized in Table \@ref(tab:non-cognate-gca). As above, the intercept represents all participants' mean target looking time across the entire analysis window when labels are correctly pronounced, this time for non-cognate items. The significant intercept suggests that toddlers generally succeeded at finding non-cognate targets. The significant main effects for all three time terms suggest that the model is accounting for the curvilinear nature of the looking trajectory.
+
+As with cognates, this model revealed a significant main effect of $pronunciation$. Toddlers looked less to non-cognate targets when they were mispronounced. Pronunciation also interacted significantly with all three time terms, suggesting that the looking trajectory had a lower peak and shallower rise on mispronounced trials compared to correctly-pronounced ones.
+
+```{r non-cognate-gca}
+# summary(mod_noncognates_simpler)
+
+apa_table(
+  mod_noncognates_simpler %>%
+    broom.mixed::tidy() %>%
+    filter(effect == "fixed") %>%
+    mutate(p = papaja::printp(p.value)) %>%
+    mutate(
+      term = str_replace(term, "ot", "time"),
+      term = str_replace(term, "misp_condmispronounced", "pronunciation"),
+      term = str_replace(term, "lang_groupbilingual", "lang group"),
+      std.error = round(std.error, 3)
+    ) %>%
+    rename(
+      "*t* = " = statistic,
+      "*p*" = p,
+      Term = term,
+      Est. = estimate,
+      SE = std.error
+    ) %>%
+    select(-effect, -group, -p.value),
+  caption = "Significant fixed effects from a growth curve model predicting looking time based on time, pronunciation, and language group for non-cognate targets."
+)
+```
+
+```{r probing-lang-group-by-misp, fig.cap= "Model-predicted looking from the cognate model (left) and the non-cognate model (right) based on language group (x-axis) and pronunciation (colour). Whiskers indicate 95\\% CI. Y-axis is in emprirical logit space, where higher values relate to a higher probability of looking to the target.", height = 3}
+
+lang_group_by_misp_cond_noncog <- plot(ggeffects::ggpredict(mod_noncognates_simpler,
+  terms = c("lang_group", "misp_cond"))) +
+  scale_color_manual(
+    values = brewer.pal(4, "Paired")[c(2:1)],
+    name = ""
+  ) +
+  xlab("Language group") +
+  ylab("") +
+  coord_cartesian(ylim = c(0.35, 1.41)) +
+  theme(legend.position = "bottom") +
+  ggtitle("Non-cognates")
+
+lang_group_by_misp_cond_cog <- plot(ggeffects::ggpredict(mod_cognates,
+  terms = c("lang_group", "misp_cond"))) +
+  scale_color_manual(
+    values = brewer.pal(4, "Paired")[c(4:3)],
+    name = "Pronunciation") +
+  xlab("Language group") +
+  ylab("Predicted looking to target (empirical logits)") +
+  coord_cartesian(ylim = c(0.35, 1.41)) +
+  theme(legend.position = "bottom") +
+  ggtitle("Cognates")
+
+(lang_group_by_misp_cond_cog + lang_group_by_misp_cond_noncog)
+```
+
+However, in contrast to the cognates model, here we found more robust $language\:group$ effects. First, we found a significant main effect of $language\:group$: bilinguals looked less to correctly pronounced targets overall compared to monolinguals. Further, $pronunciation$ and $language\:group$ interacted in the opposite direction than in the cognate model. Across the analysis window, monolinguals looked at the target less when they heard a mispronounced non-cognate compared to a correctly pronounced one. In contrast, bilinguals showed no such decrease and instead showed equivalent looking for both correctly-pronounced and mispronounced non-cognate words. See Figure \@ref(fig:probing-lang-group-by-misp) for a visualization of the interaction between language group and pronunciation for both the cognate and non-cognate model.
+
+### Cognate Effect in Bilinguals
+
+Because our previous models showed that bilinguals displayed strikingly different patterns for cognates and non-cognates, we created a model including only the bilingual participants. This model predicted looking proportion using pronunciation (correctly pronounced or mispronounced), word type (cognate or non-cognate), and three orthogonal polynomials for time. We also included random slopes per participant per item to account for participants' preferences for some items over others. Model comparison revealed that including 3-way interactions did not explain additional variance over a simpler model ($\chi^2$ = `r round(bilings_mod_simpler_better$Chisq[2], 2)`, *p* = `r round(bilings_mod_simpler_better$pval[2], 2)`). We thus present the results of a model with all two-way interactions only.
+
+Here the intercept represents bilinguals' overall looking time in the analysis window for correctly pronounced non-cognates. In this model we saw significant main effects for linear and quadratic time, suggesting that the model accurately captured the shape of the curve. While non-significant as a main effect, including cubic time did significantly improve model fit ($\chi^2$ = `r round(anova_bilings_ot3_good$statistic[2])`, *p* `r printp(anova_bilings_ot3_good$p.value[2])`) and is therefore retained in the final model. 
+
+We found no main effect of $pronunciation$ in this model, but we did find two $time$ by $pronunciation$ interactions, as in previous models. These suggest that bilingual toddlers were slower to look to the target on mispronounced trials.
+
+```{r model-predicted-timecourse-bilings, fig.cap = "Both real (solid line) and model-predicted (dashed line) looking timecourses. Model predictions come from the model examining the cognate effect in bilinguals only. Confidence bands represent the 95\\% confidence interval of the model-predicted data. Timecourses for cognates (left) and non-cognates (right) are separated by pronunciation (line darkness)."}
+
+model_predicted_timecourse_bilings <- ggplot(bilings, aes(
+  x = time,
+  y = pred_lt,
+  fill = interaction(misp_cond, factor(word_type, levels = c("cognate", "non-cognate"))),
+  colour = interaction(misp_cond, factor(word_type, levels = c("cognate", "non-cognate")))
+)) +
+  stat_smooth(linetype = "dotdash", se = T) +
+  stat_smooth(aes(y = elog), se = F) +
+  scale_fill_manual(
+    values = brewer.pal(4, "Paired")[c(4:1)],
+    name = "Condition",
+    labels = c("Correct (Cog)", "MP (Cog)", "Correct (Non-cog)", "MP (Non-cog)")
+  ) +
+  scale_colour_manual(
+    values = brewer.pal(4, "Paired")[c(4:1)],
+    name = "Condition",
+    labels = c("Correct (Cog)", "MP (Cog)", "Correct (Non-cog)", "MP (Non-cog)")
+  ) +
+  facet_grid(~ factor(word_type, levels = c("cognate", "non-cognate"))) +
+  geom_hline(yintercept = 0, colour = "grey70") +
+  geom_vline(xintercept = 360, colour = "grey70") +
+  xlab("Time (in ms) since target onset") +
+  ylab("Target looking (empirical logits)") +
+  ggtitle("Bilinguals only") +
+  theme_minimal()
+
+model_predicted_timecourse_bilings
+```
+
+Further, we found a $word\:type$ by $pronunciation$ interaction, visible in the timecourse in Figure \@ref(fig:model-predicted-timecourse-bilings). Bilinguals looked less to mispronounced cognates than to correctly pronounced cognates, but looking was equivalent across pronunciations for non-cognates. Bilinguals also spent less of the analysis window looking at correctly pronounced non-cognates compared to correctly pronounced cognates, as evidenced by the main effect of $word\:type$. The same effect can be seen in Figure \@ref(fig:probing-lang-group-by-misp). 
+
+As a further exploratory analysis, we added language dominance (continuous percentage of exposure to English) to the final bilingual model, which overall improved model fit ($\chi^2$ = `r round(dom_helps$chisq[2], 2)`, p`r printp(dom_helps$pr_chisq[2])`) (see Supplemental Materials for full model results and visualisation). The pattern of reduced sensitivity to mispronunciations for non-cognates appeared to be more pronounced for more French-dominant participants (recall that all stimuli were presented in English only). We note that these results should be interpreted with caution, as there were only 12 participants in each of these dominance subgroups.
+
+```{r biling-gca-reporting}
+
+apa_table(
+  mod_bilings_simpler %>%
+    tidy() %>%
+    filter(effect == "fixed") %>%
+    mutate(p = papaja::printp(p.value)) %>%
+    mutate(
+      term = str_replace(term, "ot", "time"),
+      term = str_replace(term, "misp_condmispronounced", "pronunciation"),
+      term = str_replace(term, "lang_groupbilingual", "lang group"),
+      term = str_replace(term, "word_typecognate", "word type"),
+      std.error = round(std.error, 3)
+    ) %>%
+    rename(
+      "*p*" = p,
+      "*t* = " = statistic
+    ) %>%
+    select(-effect, -group, -p.value),
+  caption = "Fixed effects for the model examining the cognate effect in bilinguals"
+)
+```
+
+
+### Cognate Effect in Monolinguals
+
+One potential alternate explanation for bilinguals’ results is that they performed differently on cognates vs. non-cognates due to the specific items tested in each condition, rather than due to those items’ cognate status. If this is the case, then monolinguals should show the same difference in performance for the two sets of items, despite their lack of familiarity with French. To test this possibility, we ran the same initial model on the monolingual data as we did on the bilingual data. Here, three-way interactions were maintained as they improved model fit ($\chi^2$ = `r round(monolings_mod_simpler_worse$Chisq[2],1)`, *p* = `r printp(monolings_mod_simpler_worse$pval[2])`).
+
+Here the intercept represents overall target looking proportion across the analysis window for correctly-pronounced non-cognates. As in previous models, the intercept and time terms are all significant, suggesting that monolinguals generally succeeded at the task and that the looking trajectory was curvilinear. The main effect of $pronunciation$ in combination with all three $time$-by-$pronunciation$ interactions show that monolinguals looked more slowly to mispronounced targets and spent less time looking at them overall. 
+
+We found no main effect of word type, suggesting that looking proportions were equivalent across correctly-pronounced cognates and non-cognates. Unexpectedly, we did find some interactions with word type. Three-way interactions between linear and cubic $time$, $word\:type$, and $pronunciation$ show differences in the slopes between cognates and non-cognates were more pronounced in the correctly-pronounced condition. A marginal interaction between $word\:type$, and $pronunciation$ suggests that monolinguals showed a slightly larger mispronunciation effect for non-cognates than for cognates, perfectly counter to the effect we observe for bilinguals.
+
+Overall, the results of the growth curve analyses suggest that monolinguals show a robust mispronunciation effect for both cognates and non-cognates, as one would expect. In contrast, bilinguals show a mispronunciation effect only for cognates, with no evidence for an effect of pronunciation in non-cognates.
+
+```{r monoling-gca-reporting}
+
+apa_table(
+  mod_monolings %>%
+    tidy() %>%
+    filter(effect == "fixed") %>%
+    mutate(p = papaja::printp(p.value)) %>%
+    mutate(
+      term = str_replace(term, "ot", "time"),
+      term = str_replace(term, "misp_condmispronounced", "pronunciation"),
+      term = str_replace(term, "word_typecognate", "word type"),
+      std.error = round(std.error, 2)
+    ) %>%
+    rename(
+      "*p*" = p,
+      "*t* = " = statistic
+    ) %>%
+    select(-effect, -group, -p.value),
+  caption = "Fixed effects table for monolingual model examining cognate effect."
+)
+```
+
+# Discussion
+
+In the current study, we investigated how bilingual toddlers represent phonological detail during word recognition by presenting them with mispronunciations of common words. We tested whether cognates (e.g., banana - *banane* [fr. banana]) and non-cognates (e.g. apple - *pomme* [fr. apple]) were represented differently by 24- to 30-month-old French-English bilingual toddlers in a preferential looking eyetracking task, comparing results with monolingual toddlers.
+
+Overall, both monolingual and bilingual children were successful in identifying familiar words, whether cognate or non-cognate, and whether correctly pronounced or mispronounced. This indicates resilience in children’s word comprehension. In the more sensitive growth curve analyses, although not in traditional ANOVAs, we found monolingual-bilingual similarities for cognate comprehension, but differences for non-cognate comprehension. For cognates, bilinguals performed very similarly to monolinguals, with strong performance when words were correctly pronounced, and a reliable decrease in looking when targets were mispronounced. In contrast, bilinguals showed no evidence of mispronunciation detection in non-cognates, looking equivalently to correctly-pronounced and mispronounced non-cognates. Monolinguals showed mispronunciation effects for both word types, suggesting that bilinguals’ language background was driving this cognate effect. In the next sections, we reflect on these results in light of our original predictions.
+
+## Cognate Status Affects Mispronunciation Sensitivity 
+
+Two of our predictions pertained to bilingual toddlers’ sensitivity to mispronunciations, and were based on previous studies with Spanish-Catalan bilinguals [@ramon-casasAreNonCognateWords2010; @ramon-casasVowelCategorizationWord2009].  We expected 1) that bilingual toddlers would be less sensitive to mispronunciations than monolinguals overall, and 2) bilinguals’ insensitivity to mispronunciations would be especially  pronounced for cognates compared to non-cognates. Following previous interpretations, we expected that cognates would be phonologically underspecified compared to non-cognates because there is some overlap in sounds across languages in addition to subtle language-specific variation [e.g., @ramon-casasMinimalpairWordLearning2017]. 
+We instead found that for cognates, bilinguals showed similar sensitivity to mispronunciations as monolinguals, but that bilinguals were insensitive to mispronunciations for non-cognates, perfectly counter to our predictions. 
+
+The most plausible explanation for this effect is that cognates are represented at earlier ages in bilingual development than non-cognates due to their cross-language phonological overlap. Exposure to a cognate in one language seems to bolster the cognate’s sound representation in both languages. Evidence supporting this idea comes from the adult literature, where cognates with identical orthography facilitate faster word recognition when they are pronounced more similarly in both languages [e.g., @dijkstraHowCrosslanguageSimilarity2010]. There, like in our study, participants' increased speed on closer cognates could be explained by the greater cross-language similarity of the cognates, even though the test only occurred in one language. 
+
+This explanation has deep implications for how bilinguals organize the sound systems of their two languages as early as 24 months. The cognate stimuli used in this study were chosen to maximize the phonological overlap between the French and English words. Still, most words differed in their pronunciation across the languages.^[Cognate orthography was sometimes more highly overlapping, but this information would not be accessible to pre-literate toddlers.] However, most of the cross-language changes in pronunciation follow principled rules (e.g. English t͡ʃ is reliably matched with French ʃ in French-English cognates). The results of our study suggest that by 24 months, toddlers have learned these associations sufficiently well that experience with a cognate in one language leads to stronger representation of the word wholesale. Put simply, if hearing English “chocolate” also strengthens bilinguals’ representations of French “*chocolat*” (roughly pronounced *shockola*), then bilinguals must have a mapping between the sounds in both words, even when they differ.
+
+However, our results seem to contrast with the findings of two studies that tested cognates and non-cognates respectively in Spanish-Catalan bilingual toddlers [@ramon-casasAreNonCognateWords2010; @ramon-casasVowelCategorizationWord2009].
+These studies compared two types of cognates: The first type contained a vowel mispronunciation that was contrastive only in Catalan (specifically the /e/-/ε/ contrast) but would not cross a category boundary in Spanish. The second type contained a vowel mispronunciation that was contrastive in both Spanish and Catalan (for example /e/-/i/ or /e/-/a/ contrasts). Children noticed the Catalan-only mispronunciations when inside non-cognate words but not inside cognate words, the opposite pattern from our results. 
+However, for contrasts present in both languages, bilinguals did notice the mispronunciations inside cognates [@ramon-casasVowelCategorizationWord2009], which aligns with our findings. The mispronunciations used in our study were designed to be mispronunciations in both languages. Further, we also included consonant mispronunciations, which were more salient. Together these differences may explain why our findings differ from those reported in these studies. 
+
+Interestingly, in two studies of Mandarin-English bilingual toddlers, bilinguals were found to detect mispronunciations in non-cognate words [@singhSensitivityRaceLanguage2020; @wewalaarachchiVowelsConsonantsLexical2017]. The toddlers in these studies were between 24- and 26-month-old, and thus at the younger end of the sample in our study. Thus, while in their study, younger bilinguals were able to detect mispronunciations in non-cognates (cognates were not tested), in our study bilinguals did not detect mispronunciations in non-cognates. There are two possible explanations, one is that in languages that have a fair number of cognates (such as English and French), cognates are acquired more easily, while non-cognates lag behind. In language pairs such as English and Mandarin, fewer cognates exist, and thus any effect of cross-language similarity is attenuated. Or, it may be that children learning a tonal language such as Mandarin are more sensitive to mispronunciations, and thus detect mispronunciations in all words earlier than children learning non-tonal languages. Another difference between these studies and ours is that they used novel distractors whereas we used a familiar distractor, which might have made it more difficult for toddlers in our study to recognize the referent for a mispronounced target [though see @vonholzenDevelopmentInfantsResponses2021]. Further research should explore how the role of cross-language phonological overlap differs for different language pairs, for example in collaborative approaches like ManyBabies [@frankCollaborativeApproachInfant2017].
+
+The cognate effect we observed in this study lends further support to the notion that robust word representations do not emerge at the same rate for the entire lexicon. For example, work with monolinguals shows that toddlers detect mispronunciations in verbs a full year later than mispronunciations in nouns, potentially as a result of the increased difficulty of learning verbs [@mooreExaminingRolesRegularity2021]. The same logic can be applied to our findings in the current paper: non-cognates take more time to learn [@boschFirstTranslationEquivalents2014; @mitchellCognatesAreAdvantaged2022; @schelletterEffectFormSimilarity2002] and thus may take more experience to represent robustly.
+
+## Cognate and Non-Cognate Word Recognition
+
+An additional prediction was that bilingual infants would be better at recognizing cognate words compared to non-cognate words, as we expected that sound overlap between the two forms of a cognate would boost the activation of the labelled concept. Evidence from the growth-curve model, although not the ANOVA,  suggested that bilinguals did indeed recognize cognates more readily than non-cognates. However, we unexpectedly also found a cognate effect in the monolingual-only model as well, albeit in the opposite direction of the effect observed for bilinguals, and not a main effect: monolinguals were faster to find non-cognates than to find cognates. What can this mean?
+
+Despite our best attempts to recruit English monolinguals with no French exposure, the context of our lab made this fairly impossible. Thus, even our monolingual group had some knowledge of the French labels for cognates. However, if this exposure were affecting monolinguals’ performance in this task, we would expect that they would show trends more similar to those found in the bilingual group. Since instead they show the opposite trend, we can assume that monolinguals were not accessing their French knowledge during this entirely English task.  The reverse cognate effect we observe may thus be due to item-level differences between the two word types, despite the matching efforts we took with the stimuli across groups. However, the fact that the direction of effect is opposite for monolinguals (monolinguals were faster on non-cognates, vs. bilinguals looked more to cognates) suggests that the cognate effect in bilinguals was strong enough to overcome possible item-level effects.
+
+The results from the growth curve analyses fit with the results of a word recognition study of German 18- to 53-month-olds who learned English as a second language starting at 12 months [@vonholzenImpactCrosslanguagePhonological2018].
+In this study, time course analyses showed that English cognates were recognized faster than English non-cognates, but cognates and non-cognates were recognized with similar efficiency in German, which was participants' dominant language. The bilinguals tested in our study were only tested in English, which was the dominant language for half and the non-dominant language for the other half. Exploratory analyses suggested that participants tested in their non-dominant language (i.e., French-dominant children) showed lesser sensitivity to non-cognate mispronunciations than participants tested in their dominant language, while both groups showed similar sensitivity to cognate mispronunciations. This finding would suggest that toddlers with uneven language dominance can rely more on their dominant language when listening to cognates in their non-dominant language. However, given the small subsamples in each dominance group, further research is needed to explore the relationship between language dominance and cognate processing in toddlers.
+
+Our results fit with findings of a cognate advantage when measuring bilingual toddlers' productive vocabulary. Cognates are overrepresented in childrens’ early vocabularies, indicating that cross-language phonological overlap helps children acquire new words  [@boschFirstTranslationEquivalents2014; @mitchellCognatesAreAdvantaged2022; @schelletterEffectFormSimilarity2002]. Together, previous work suggests that bilingual children might leverage the cross-language phonological overlap of cognate words to learn both words in a cognate pair faster than they would if there was no cross-language phonological overlap, essentially boosting their word learning. Here we provide evidence that children may also leverage cross-language phonological overlap to more robustly represent the sounds in known cognate pairs.
+
+## Differences Between Bilinguals and Monolinguals in Recognizing Words
+
+While our main goals with this paper were to investigate the robustness of bilinguals’ early word representations, our design allowed us to explore how bilingual and monolingual toddlers compare when recognizing correctly-pronounced familiar words. Growth-curve analyses suggested that bilinguals and monolinguals differed in their recognition of non-cognate words but not cognate words, even when words were correctly pronounced. This finding fits with a large archival study investigating how the proportion of time that bilingual children spend hearing each of their languages impacts their online word comprehension [@sandermontantMoreTheyHear2022].^[This study also contains the data from the present study as one of 5 collected datasets, therefore the conclusions from their study cannot be considered fully independent from our own.] In this study, language exposure was an important predictor in how well children recognize a correctly pronounced word. Bilinguals hear cognates in both their languages and thus have more experience with those sound patterns. Therefore, bilinguals might have similar exposure to the sounds in cognates as monolinguals do to all words, which would explain why bilinguals’ cognate recognition looks more similar to monolingual controls. Meanwhile, the reduced exposure bilinguals have to the sounds in non-cognates may dampen their word recognition of these words relative to controls.
+
+## Implications and Future Directions
+
+The present study opens several routes for future investigation. First, during the study design phase we chose to only test bilinguals in one of their languages (English), which was the dominant language for some children and the non-dominant language for others. This was done because of the challenge of constructing comparable mispronunciations in both languages. However, future studies could compare simultaneous bilinguals’ recognition of cognates and non-cognates in both of their languages, to more fully test whether cognate effects vary by language dominance. Second, we found that cognates were not phonologically underspecified in our sample of bilingual toddlers, but that instead non-cognates were phonologically underspecified. Our design included some items with a vowel mispronunciation and others with a consonant mispronunciation, as a first attempt to better understand how cognate status and phonological representations interact. Vowels and consonants might be represented robustly at different times in bilingual development based on the cross-language phonological overlap. Therefore, manipulating both vowels and consonants on the same items would allow us to test whether one or the other is underspecified at this age. Finally, while this work has shown that bilingual toddlers’ representations of non-cognates lag behind their representations of cognates, we do not yet know when bilinguals represent all nouns robustly. To discover the entire timeline of well-specified representations, future work would need to test even older toddlers on the same questions we examine here. Exploring these three areas for future research would bring important nuance to the question of how early word learning happens and the factors that affect bilingual word learning.
+
+# Conclusion
+The results of this study highlight the role of experience in children’s development of robust word representations, and shed new light on the ways that bilingual toddlers structure the phonological inventories across both languages. The cognate effect we found in this experiment suggests that for young bilinguals, experience in one language can transfer to the other. Further, these findings provide additional evidence that well-specified representations do not emerge for all words in the lexicon at the same time. Indeed, bilinguals’ word representations depend on a complex interplay between phonology, concept knowledge, and experience, just as monolinguals’ do. 
+
+```{r wordcount}
+# wordcountaddin:::text_stats()
+```
+
+\pagebreak
+
+# References
+>>>>>>> a44d641ef2980579844d92aa2b22f42b39da8dd3

@@ -1,0 +1,731 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+# parameters  
+```{r}
+onset_target_time <- 1500
+eyetracking_start_time <- 360
+eyetracking_end_time <- 2060
+```
+
+
+# Data Preparation 
+## load packages
+
+```{r}
+# devtools::install_github("psyteachr/introdataviz")
+library(here)
+library(tidyverse)
+library(eyetrackingR)
+library(janitor)
+library(readxl)
+library(broom)
+library(afex)
+library(scales)
+library(RColorBrewer)
+library(tidylog)
+library(papaja)
+library(introdataviz)
+library(glue)
+```
+## stimuli stats
+### read in desc
+```{r}
+stimuli_info <- read_excel(here("data/trial_info/stimuli_info.xlsx")) %>%
+  clean_names() %>%
+  select(cognate_status, english, french, paired_with, manner, place, voicedness, backness, height, misp_type, size, change, mispronounciation_chosen, category, animacy, article, length_phonemes_english, length_phonemes_french, length_syllables_english, length_syllables_french, aoa_archival_english, aoa_archival_french, x24m_percent_english, x24m_percent_french)
+```
+
+#### cognate and non-cognate # of feature changes
+
+
+```{r}
+cognate_stimuli_t_test <- t.test(size ~ cognate_status, data = stimuli_info)
+```
+#### phoneme, syllable length
+```{r}
+stimuli_eng_phoneme_t_test <- t.test(length_phonemes_english ~ cognate_status, data = stimuli_info)
+stimuli_fr_phoneme_t_test <- t.test(length_phonemes_french ~ cognate_status, data = stimuli_info)
+stimuli_eng_syll_t_test <- t.test(length_syllables_english ~ cognate_status, data = stimuli_info)
+stimuli_fr_syll_t_test <- t.test(length_syllables_french ~ cognate_status, data = stimuli_info)
+```
+
+#### age of acquisition
+
+```{r}
+stimuli_aoa_english_t_test <- t.test(aoa_archival_english ~ cognate_status, data = stimuli_info)
+stimuli_aoa_french_t_test <- t.test(aoa_archival_french ~ cognate_status, data = stimuli_info)
+stimuli_aoa_24m_english_t_test <- t.test(x24m_percent_english ~ cognate_status, data = stimuli_info)
+stimuli_aoa_24m_french_t_test <- t.test(x24m_percent_french ~ cognate_status, data = stimuli_info)
+```
+
+#### create a table from all of these
+```{r}
+
+table_stimuli_t_Test_comparison <- rbind(
+  apa_print(cognate_stimuli_t_test)$table,
+  apa_print(stimuli_eng_phoneme_t_test)$table,
+  apa_print(stimuli_fr_phoneme_t_test)$table,
+  apa_print(stimuli_eng_syll_t_test)$table,
+  apa_print(stimuli_fr_syll_t_test)$table,
+  apa_print(stimuli_aoa_english_t_test)$table,
+  apa_print(stimuli_aoa_french_t_test)$table,
+  apa_print(stimuli_aoa_24m_english_t_test)$table,
+  apa_print(stimuli_aoa_24m_french_t_test)$table
+) %>%
+  add_column(Term = c(
+    "Ave. # of Feature Changes",
+    "Ave. # of Phonemes (English)",
+    "Ave. # of Phonemes (French)",
+    "Ave. # of Syllables (English)",
+    "Ave. # of Syllables (French)",
+    "Ave. Age of Acquisition 50% (English)",
+    "Ave. Age of Acquisition 50%  (French)",
+    "% Word known at 24 mo (English)",
+    "% Word known at 24 mo (French)"
+  ))
+
+stimuli_means <- stimuli_info %>%
+  group_by(cognate_status) %>%
+  summarize(
+    size_mispronunciation = mean(size),
+    phoneme_lenth_eng = mean(length_phonemes_english),
+    phoneme_lenth_fr = mean(length_phonemes_french),
+    syll_lenth_eng = mean(length_syllables_english),
+    syll_lenth_fr = mean(length_syllables_french),
+    mean_aoa_archival_eng = mean(aoa_archival_english),
+    mean_aoa_archival_fr = mean(aoa_archival_french),
+    mean_24m_archival_eng = mean(x24m_percent_english),
+    mean_24m_archival_fr = mean(x24m_percent_french)
+  )
+
+stimuli_means_transposed <- stimuli_means %>%
+  pivot_longer(!cognate_status, names_to = "term", values_to = "col2") %>%
+  mutate(col2 = round(col2, 2)) %>%
+  pivot_wider(names_from = "cognate_status", values_from = "col2")
+
+table_stimuli_comparison <- cbind(table_stimuli_t_Test_comparison, stimuli_means_transposed) %>%
+  mutate(language = case_when(
+    str_detect(Term, "English") ~ "English",
+    str_detect(Term, "French") ~ "French"
+  )) %>%
+  arrange(language) %>%
+  select(Term, cognate, `non-cognate`, estimate:p.value) %>%
+  rename(
+    Cognates = cognate,
+    `Non-Cognates` = `non-cognate`
+  )
+```
+
+
+## sensitivity analysis (from gpower - copied from "protocol of power analyses")
+5] -- Monday, June 13, 2022 -- 15:59:29
+F tests - ANOVA: Repeated measures, within-between interaction
+Analysis:	Sensitivity: Compute required effect size 
+Input:	α err prob	=	0.05
+	Power (1-β err prob)	=	0.8
+	Total sample size	=	48
+	Number of groups	=	2
+	Number of measurements	=	2
+	Corr among rep measures	=	0.5
+	Nonsphericity correction ε	=	1
+Output:	Noncentrality parameter λ	=	8.1898572
+	Critical F	=	4.0517487
+	Numerator df	=	1.0000000
+	Denominator df	=	46.0000000
+	Effect size f	=	0.2065321
+used # 14 on this link to convert to d:
+https://www.psychometrica.de/effect_size.html
+
+--> d = 0.4131
+
+
+
+## load data from cm1
+```{r}
+data_rezero <- readRDS(here("results", "processed_data", "preprocessed_eye_data.Rdata"))
+```
+
+
+
+## zoom on naming time window
+now, 0 is onset of target word naming, instead of start of trial. 
+```{r}
+# zoom in on naming time window
+
+naming_window <- subset_by_window(data_rezero,
+  window_start_time = onset_target_time, # 1500ms, includes 360ms of time for orientation for plotting
+  window_end_time = onset_target_time + eyetracking_end_time + 200, # added 200ms, for more even plotting on binned data
+  rezero = T
+)
+```
+
+
+## exclude trails with trackloss
+```{r}
+## Trackloss analysis
+# Need at least 750ms looking = 750/1700 ~ .44
+# clean_by_trackloss takes the maximum amount of track loss per trial, so it's 1-.44
+trackloss <- trackloss_analysis(naming_window)
+
+
+## Gets rid of rows with trackloss within window of analysis
+naming_window_clean <- clean_by_trackloss(
+  data = naming_window,
+  trial_prop_thresh = 1 - (750 / (eyetracking_end_time - eyetracking_start_time)),
+  window_start_time = eyetracking_start_time,
+  window_end_time = eyetracking_end_time
+)
+```
+# check how many trials I have per participant
+
+```{r}
+naming_window_clean %>%
+  group_by(part_id) %>%
+  distinct(media_name) %>%
+  summarize(N = n()) %>%
+  arrange(N)
+```
+
+# check if enough trials for each keeper
+```{r}
+
+
+
+
+# check if enough data
+
+counted_n_trials_by_type <- naming_window_clean %>%
+  filter(exclude_summary == "keeper") %>%
+  group_by(part_id, paste0(word_type, misp_cond)) %>%
+  distinct(trial_num, .keep_all = T) %>%
+  count(.drop = F) %>%
+  group_by(part_id) %>%
+  mutate(exclude_notenoughtrials = case_when(
+    min(n) < 2 ~ 1,
+    length(n) < 4 ~ 1,
+    TRUE ~ 0
+  )) %>%
+  arrange(-exclude_notenoughtrials)
+
+# one row per participant, with column that says 1 if exclude, 0 if keep
+dict_not_enough_trials <- counted_n_trials_by_type %>%
+  group_by(part_id) %>%
+  summarize(exclude_not_enough_trials = ifelse(sum(exclude_notenoughtrials) > 0, 1, 0))
+
+# add to full data set
+naming_window_clean <- naming_window_clean %>% full_join(dict_not_enough_trials)
+# who was excluded?
+naming_window_clean %>%
+  filter(exclude_not_enough_trials == 1) %>%
+  group_by(lang_group) %>%
+  distinct(part_id)
+```
+## summary of excluded participants
+```{r}
+naming_window_clean <- naming_window_clean %>%
+  mutate(
+    exclude_summary = case_when(
+      exclude_summary == "keeper" & exclude_not_enough_trials == 1 ~ "5_not_enough_data",
+      TRUE ~ exclude_summary
+    )
+  )
+
+
+desc_excluded_part <- naming_window_clean %>%
+  # add in participant with no eyetracking data, who was excluded for language reasons
+  full_join(data_rezero %>% filter(has_eye_data == 0)) %>%
+  distinct(part_id, .keep_all = T) %>%
+  group_by(exclude_summary) %>%
+  count() %>%
+  pivot_wider(names_from = exclude_summary, values_from = n) %>%
+  clean_names()
+
+desc_excluded_part_not_enough_trials <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  filter(exclude_summary == "5_not_enough_data") %>%
+  group_by(exclude_summary, lang_group) %>%
+  count() %>%
+  pivot_wider(names_from = lang_group, values_from = n)
+```
+
+## actually exclude participants
+
+```{r}
+naming_window_clean <- naming_window_clean %>% filter(exclude_summary == "keeper")
+```
+
+# Descriptives
+## Participant numbers
+```{r}
+table_1 <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  group_by(lang_group) %>%
+  summarize(
+    n = n_distinct(part_id),
+    mean_age = round(mean(age_months), 2),
+    sd_age = round(sd(age_months), 2),
+    min_age = round(min(age_months), 2),
+    max_age = round(max(age_months), 2),
+    gender = round(mean(gender == "female"), 2) * 100,
+    mean_eng = round(mean(dominant_language == "English", na.rm = T), 2)
+  ) %>%
+  mutate(
+    mean_sd = str_glue("{mean_age}({sd_age})"),
+    range = str_glue("{min_age}-{max_age}")
+  ) %>%
+  select(lang_group, n, mean_sd, range, gender, mean_eng) %>%
+  mutate_all(as.character) %>%
+  pivot_longer(-lang_group) %>%
+  pivot_wider(names_from = lang_group, values_from = value)
+table_1
+```
+## language descriptives
+### mean language exposure
+```{r}
+
+
+desc_language <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  group_by(lang_group) %>%
+  summarise_at(vars(percent_dominant, percent_nondominant, percent_english),
+    list(mean = mean, min = min, max = max),
+    na.rm = T
+  ) %>%
+  mutate(across(ends_with("mean"), round)) %>%
+  relocate(contains("nondominant"), .after = percent_dominant_max) %>%
+  relocate(contains("english"), .after = percent_nondominant_max)
+```
+### dominant language 
+```{r}
+desc_language_english <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  group_by(lang_group) %>%
+  summarize(percent_English_dominant = mean(dominant_language == "English"))
+```
+
+
+### third language
+```{r}
+desc_addtl_lang <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  filter(percent_other > 0, lang_group == "bilingual") %>%
+  summarize(
+    n = n(),
+    min = min(percent_other),
+    max = max(percent_other),
+    mean = mean(percent_other)
+  )
+```
+## target words known
+```{r}
+words_known <- read_csv(here("results", "processed_data", "cm_target_words_known.csv")) %>% select(-comments)
+
+# add language group and keeper info
+words_known <- words_known %>% left_join(naming_window_clean %>% select(lang_group, exclude_summary, part_id) %>% distinct(part_id, .keep_all = T))
+
+# add cognate in
+words_known <- words_known %>% mutate(item_type = case_when(
+  item %in% c("banana", "bowl", "chocolate", "giraffe", "pizza", "table", "banane", "bol", "chocolat", "girafe") ~ "cognate",
+  item %in% c("butterfly", "cookie", "foot", "monkey", "mouth", "window", "papillon", "biscuit", "pied", "singe", "bouche", "fenetre") ~ "non-cognate"
+))
+
+words_known_table <- words_known %>%
+  filter(exclude_summary == "keeper") %>%
+  group_by(lang_group, language, item_type) %>%
+  summarize(mean = mean(known))
+
+words_known_biling <- words_known_table %>%
+  filter(lang_group == "bilingual") %>%
+  summarise(mean_known = mean(mean))
+
+words_known_monoling <- words_known_table %>%
+  filter(lang_group == "monolingual") %>%
+  summarise(mean_known = mean(mean))
+
+monoling_words_cog <- words_known_table %>%
+  filter(lang_group == "monolingual" & language == "fr")
+```
+
+
+## ethnicity
+```{r}
+desc_ethnicity <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  tabyl(child_ethnicity) %>%
+  mutate(percent = round(percent, 2) * 100) %>%
+  arrange(-n)
+
+desc_ethnicity_wide <- desc_ethnicity %>%
+  select(-n) %>%
+  pivot_wider(names_from = child_ethnicity, values_from = percent) %>%
+  clean_names()
+# education
+desc_education <- naming_window_clean %>%
+  distinct(part_id, .keep_all = T) %>%
+  group_by(study) %>%
+  summarize(
+    mean = round(mean(years_education, na.rm = T), 1),
+    sd = round(sd(years_education, na.rm = T), 1)
+  )
+```
+
+
+# prepare data analysis
+## get data back into eyetrackingR format
+```{r}
+naming_window_clean <- make_eyetrackingr_data(naming_window_clean,
+  participant_column = "part_id",
+  trial_column = "media_name",
+  time_column = "timestamp",
+  trackloss_column = "track_loss",
+  aoi_columns = c("target", "distractor"),
+  treat_non_aoi_looks_as_missing = TRUE
+)
+```
+
+## average number of trials
+```{r}
+trial_summary <- naming_window_clean %>%
+  group_by(part_id) %>%
+  summarize(N_trials = mean(n_distinct(media_name))) %>%
+  summarize(
+    mean = round(mean(N_trials), 1),
+    sd = round(sd(N_trials), 1)
+  )
+```
+## save data for growth curve analysis
+
+### bin data for plotting
+Includes the 360ms phase we don't analyze
+```{r}
+
+
+# convert data into a series of time-bins:
+
+naming_binned_plots <- make_time_sequence_data(naming_window_clean,
+  time_bin_size = 100,
+  predictor_columns = c(
+    "part_id", "lang_group", "word_type", "misp_cond", "item", "misp_type", "dominant_language", "order",
+    "percent_english"
+  ),
+  aois = c("target", "distractor"),
+  summarize_by = c("item_named")
+)
+```
+### bin data for growth curve
+
+#### zoom on naming time window
+now, 0 is onset of window of analysis
+```{r}
+# zoom in on naming time window
+
+naming_window_models <- subset_by_window(naming_window_clean,
+  window_start_time = eyetracking_start_time, # cut off 360ms of time for orientation, leave only window of analysis
+  window_end_time = eyetracking_end_time , 
+  rezero = T
+)
+```
+#### bin for growth curves
+```{r}
+naming_binned_models <- make_time_sequence_data(naming_window_models,
+  time_bin_size = 100,
+  predictor_columns = c(
+    "part_id", "lang_group", "word_type", "misp_cond", "item", "misp_type", "dominant_language", "order",
+    "percent_english"
+  ),
+  aois = c("target", "distractor"),
+  summarize_by = c("item_named")
+)
+```
+
+
+
+
+### export data for growth curve analysis
+```{r}
+saveRDS(naming_binned_plots %>% filter(Time <= 2000), here("results", "processed_data", "eye_data_binned_plots.Rdata"))
+saveRDS(naming_binned_models, here("results", "processed_data", "eye_data_binned_models.Rdata"))
+```
+
+
+
+## get data for anova, zero in on window of interest
+
+```{r}
+
+anova_window <- subset_by_window(naming_window_clean,
+  window_start_time = eyetracking_start_time,
+  window_end_time = eyetracking_end_time,
+  rezero = F
+)
+response_window_agg_by_sub <- make_time_window_data(anova_window,
+  aois = "target",
+  predictor_columns = c("misp_cond", "lang_group", "word_type", "trial_type"),
+  summarize_by = "part_id"
+)
+
+
+response_window_agg_by_sub_misp <- make_time_window_data(anova_window,
+  aois = "target",
+  predictor_columns = c("misp_cond", "lang_group", "trial_type"),
+  summarize_by = "part_id"
+)
+
+response_window_agg_by_sub_word_type <- make_time_window_data(anova_window %>% filter(misp_cond == "correct"),
+  aois = "target",
+  predictor_columns = c("word_type", "lang_group"),
+  summarize_by = "part_id"
+)
+```
+
+### calculate mean looking time 
+needed to discuss anova results in paper
+```{r}
+# for overall anova (biling and monoling)
+means_eyetracking <- response_window_agg_by_sub %>%
+  group_by(misp_cond) %>%
+  summarize(mean_prop = mean(Prop)) %>%
+  mutate(mean_prop = round(mean_prop, 2)) %>%
+  pivot_wider(names_from = misp_cond, values_from = mean_prop)
+
+# for bilingual-only anova
+means_eyetracking_bilings <- response_window_agg_by_sub %>%
+  filter(lang_group == "bilingual") %>%
+  group_by(misp_cond) %>%
+  summarize(mean_prop = mean(Prop)) %>%
+  mutate(mean_prop = round(mean_prop, 2)) %>%
+  pivot_wider(names_from = misp_cond, values_from = mean_prop)
+```
+
+### check that there are no trials missing
+```{r}
+response_window_agg_by_sub %>%
+  group_by(part_id, trial_type) %>%
+  count() %>%
+  spread(trial_type, n) %>%
+  filter(`correctly pronounced cognate` != 1 | `correctly pronounced non-cognate` != 1 | `mispronounced cognate` != 1 | `mispronounced non-cognate` != 1)
+# if tibble has 0 rows, all have exactly 1 value for each of the four categories, success!
+```
+## correlations between looking time and some variables
+as pre-registered:
+- English Exposure, French Exposure
+- total conceptual vocabulary size, English vocabulary size, French vocabulary size
+- degree of language mixing (based on Language Mixing Questionnaire)
+```{r}
+
+correlations_df <- make_time_window_data(anova_window,
+  aois = "target",
+  predictor_columns = c("percent_english", "percent_french", "cdi_vocab_production_en", "cdi_vocab_production_fr", "language_mixing_score", "lang_group"),
+  summarize_by = "part_id"
+)
+
+cor_percent_english <- cor.test(correlations_df$Prop, correlations_df$percent_english)
+cor_percent_french <- cor.test(correlations_df$Prop, correlations_df$percent_french)
+cor_cdi_english <- cor.test(correlations_df$Prop, correlations_df$cdi_vocab_production_en)
+# french vocab for bilinguals only, bec monolinguals don't have french cdi data
+cor_cdi_french <- with(correlations_df %>% filter(lang_group == "bilingual"), cor.test(Prop, cdi_vocab_production_fr))
+cor_lang_mix <- cor.test(correlations_df$Prop, correlations_df$language_mixing_score)
+
+cor_table_supplementals <- rbind(
+  apa_print(cor_percent_english)$table,
+  apa_print(cor_percent_french)$table,
+  apa_print(cor_cdi_english)$table,
+  apa_print(cor_cdi_french)$table,
+  apa_print(cor_lang_mix)$table
+) %>%
+  add_column(Variable = c(
+    "% English",
+    "% French",
+    "English Words known",
+    "French Words Known",
+    "Language Mixing Score"
+  )) %>%
+  relocate(Variable, .before = estimate)
+```
+
+
+
+# plot combined across whole window
+## split violin plot
+
+```{r}
+
+ggplot(
+  response_window_agg_by_sub,
+  aes(
+    x = factor(word_type),
+    y = Prop,
+    fill = misp_cond
+  )
+) +
+  geom_hline(aes(yintercept = 0.5), colour = "darkgrey") +
+  introdataviz::geom_split_violin(alpha = .4, trim = FALSE) +
+  geom_boxplot(width = .2, alpha = .6, fatten = NULL, show.legend = F) +
+  stat_summary(
+    fun.data = "mean_se", geom = "pointrange", show.legend = F,
+    position = position_dodge(.175)
+  ) +
+  facet_wrap(vars(lang_group)) +
+  scale_y_continuous(name = "Proportion Looking to Target", breaks = c(0.00, 0.25, 0.5, 0.75, 1.00), limits = c(0, 1)) +
+  scale_fill_brewer(palette = "Set1", name = "Pronunciation", direction = -1) +
+  theme_apa() +
+  theme(legend.position = "bottom") +
+  xlab(NULL)
+ggsave(here("results", "figures", "cm_overall_looking_violin.png"), width = 7, height = 5, dpi = 500)
+```
+
+
+
+
+
+# stats
+
+## calculate threeway  anova
+```{r}
+response_window_agg_by_sub <- response_window_agg_by_sub %>% droplevels()
+
+
+# aov ex
+anova_looking <- aov_ez(response_window_agg_by_sub %>%
+  rename(
+    Language_Group = lang_group,
+    Cognate_Status = word_type,
+    Mispronunciation = misp_cond
+  ),
+dv = "Prop",
+id = "part_id",
+within = c("Cognate_Status", "Mispronunciation"),
+between = "Language_Group"
+)
+anova_looking_apa <- apa_print(anova_looking, in_paren = T)
+```
+
+
+
+
+## bilingual only anova
+```{r}
+# bilinguals only
+response_window_agg_by_sub_bil <- response_window_agg_by_sub %>%
+  filter(lang_group == "bilingual") %>%
+  droplevels() %>%
+  rename(
+    Language_Group = lang_group,
+    Cognate_Status = word_type,
+    Mispronunciation = misp_cond
+  )
+anova_result_bil_only <- aov_ez(response_window_agg_by_sub_bil,
+  dv = "Prop",
+  id = "part_id",
+  within = c("Cognate_Status", "Mispronunciation")
+)
+
+anova_result_bil_only_apa <- apa_print(anova_result_bil_only, in_paren = T)
+```
+## comparison to chance
+
+```{r}
+ttest_chance <- response_window_agg_by_sub %>%
+  group_by(lang_group, word_type, misp_cond) %>%
+  do(broom::tidy(t.test(.$Prop, data = ., mu = .5))) %>%
+  mutate(
+    estimate = round(estimate, 2),
+    cohen_d = round(statistic / sqrt(parameter + 1), 2),
+    p_apa = ifelse(p.value >= 0.001, glue("= {round(p.value,3)}"), "< 0.001"),
+    t_test = glue("t({parameter}) = {round(statistic,2)}, p {p_apa}")
+  ) %>%
+  select(lang_group, word_type, misp_cond, estimate, t_test, cohen_d) # %>%
+# pivot_wider(values_from = estimate:cohen_d, names_from = lang_group, names_glue = "{lang_group}_{.value}", names_sort = F) %>%
+# relocate(starts_with("bilingual"), .after = misp_cond)
+```
+
+
+
+
+## t-tests & effect sizes
+
+```{r}
+
+ttest_misp_by_lang <- response_window_agg_by_sub_misp %>% #
+  group_by(lang_group) %>%
+  do(broom::tidy(t.test(.$Prop ~ .$misp_cond, data = ., paired = TRUE))) %>%
+  mutate(cohen_d = statistic / sqrt(parameter + 1)) %>%
+  select(lang_group, estimate, parameter, statistic, p.value, cohen_d)
+
+mean_PTL <- response_window_agg_by_sub %>%
+  group_by(lang_group, word_type, misp_cond) %>%
+  summarize(PTL = round(mean(Prop), 2)) %>%
+  spread(misp_cond, PTL)
+```
+
+## correlations between repeated measures
+```{r}
+resp_wide <- response_window_agg_by_sub %>%
+  group_by(part_id, misp_cond) %>%
+  select(part_id, lang_group, word_type, Prop, misp_cond) %>%
+  spread(word_type, Prop)
+cor.test(resp_wide$cognate, resp_wide$`non-cognate`)
+```
+
+# timecourse plots
+
+
+
+
+## calculate proportion of looking to target vs. distractor
+```{r}
+naming_wide <- naming_binned_plots %>%
+  select(part_id, lang_group, item_named, word_type, misp_cond, misp_type, item, AOI, SamplesInAOI, TimeBin, Time, SamplesTotal) %>%
+  spread(key = AOI, value = SamplesInAOI) %>%
+  mutate(propTarget = target / SamplesTotal)
+```
+
+##  Misp in cog vs n cog (figure for paper)
+```{r}
+timecourse_four_conditions <- naming_wide %>%
+  ggplot(aes(
+    x = Time, y = propTarget,
+    colour = interaction(misp_cond, word_type),
+    fill = interaction(misp_cond, word_type)
+  )) +
+  geom_smooth(
+    method = "loess", se = .95,
+    # show.legend = FALSE,
+    size = 1.5
+  ) +
+  theme_classic(base_size = 11) +
+  xlab("Time from target word onset (ms)") +
+  ylab("Proportion target looking") +
+  facet_grid(lang_group ~ word_type) +
+  scale_color_manual(
+    values = brewer.pal(4, "Paired")[c(4:1)],
+    labels = c(
+      "Correct (cog)", "MP (cog)",
+      "Correct (non-cog)", "MP (non-cog)"
+    ),
+    name = "Condition"
+  ) +
+  scale_fill_manual(
+    values = brewer.pal(4, "Paired")[c(4:1)],
+    labels = c(
+      "Correct (cog)", "MP (cog)",
+      "Correct (non-cog)", "MP (non-cog)"
+    ),
+    name = "Condition"
+  ) +
+  geom_hline(aes(yintercept = .5), colour = "grey") +
+  geom_vline(aes(xintercept = eyetracking_start_time), linetype = "dashed", colour = "black")  +
+  coord_cartesian(ylim = c(0.3, 1), xlim = c(0, 1960)) 
+
+
+ggsave(here::here("results", "figures", "cm_lang_group_misp_by_cog.png"), width = 10, height = 7)
+```
+
+
+

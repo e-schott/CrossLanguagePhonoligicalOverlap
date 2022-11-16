@@ -1,0 +1,402 @@
+---
+title: "Growth curves"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+# parameters  
+```{r libraries}
+library(tidyverse)
+library(here)
+library(lmerTest)
+library(patchwork)
+```
+
+## load binned data from cm4
+```{r load-data}
+
+data_binned_raw <- readRDS(here("results", "processed_data", "eye_data_binned_models.Rdata")) 
+
+data_binned <- data_binned_raw %>% 
+  select(part_id, # participant
+         item, # pair
+         item_named, # target item
+         lang_group, # whether the kid is bilingual or not
+         misp_cond, # whether it correct or an MP
+         word_type, #whether it's a cognate or not
+         everything()) %>% 
+  janitor::clean_names() %>% 
+  mutate(misp_type = factor(misp_type),
+    word_type = factor(word_type, levels = c("non-cognate", "cognate")),
+         lang_group = factor(lang_group, levels = c("monolingual", "bilingual")),
+         misp_cond = factor(misp_cond, levels = c("correct", "mispronounced"))) %>% 
+  filter(aoi == "target") %>% 
+  mutate(target_item = case_when(
+    item_named == "c1bow" ~ "bowl",
+    item_named == "c1cho" ~ "chocolate",
+    item_named == "c2ban" ~ "banana",
+    item_named == "c2gir" ~ "giraffe",
+    item_named == "c3piz" ~ "pizza",
+    item_named == "c3tab" ~ "table",
+    item_named == "n1but" ~ "butterfly",
+    item_named == "n1mon" ~ "monkey",
+    item_named == "n2coo" ~ "cookie",
+    item_named == "n2foo" ~ "foot",
+    item_named == "n3mou" ~ "mouth",
+    item_named == "n3win" ~ "window"
+  ))
+
+# bowl/bol chocolate/chocolat banana/banane giraffe/giraffe pizza/pizza table/table
+
+# monkey foot mouth window cookie butterfly
+```
+
+### Text from pre-registration:
+
+24-31months
+
+Growth curve analysis: This analysis allows to compare the change in looking towards the target vs. distractor over time (Mirman, Dixon, & Magnuson, 2008). For computational efficiency, raw eyetracking data will be binned into 100ms timebins. One decision that needs to be made after collecting the data is the number of polynomials that will be fitted to the data. To make this decision, I will plot the proportions of looking towards the target by condition to inspect the number of ‘bends’ (changes of focus) in the curve. One bend in the data will require 2 polynomial terms (linear and quadratic), two bends require 3 polynomial terms (linear, quadratic, cubic), etc. (Ferguson, 2014/2017). 
+
+The GCA will include random effects for participants and participant-by-condition random effects for the cognate status as well as mispronunciation (see example of model specification below). In case of non-convergence, random effects will be pruned following Barr (2013).
+
+Model Specification for GCA with two polynomials: 
+Looking time ~   (Linear + Quadratic) ∗ cognate ∗ mispronunciation *Language_Background + (1+Linear+Quadratic | participants) + (1+Linear+Quadratic | subj:cognate) +(1+Linear+Quadratic | subj:mispronunciation)
+
+```{r gca-from-prereg, eval = F}
+
+mod_prereg <- lmer(elog ~ (ot1 + ot2 + ot3) * misp_cond * word_type * lang_group +
+               ((ot1 + ot2 + ot3) | part_id:word_type) +
+               ((ot1 + ot2 + ot3) | part_id:misp_cond),
+             control = lmerControl(optimizer="bobyqa"),
+             weights = weights,
+             data = data_binned, 
+             REML = F)
+# did not converge with the participants-only random effect, so it was removed leaving the above structure
+
+summary(mod_prereg)
+  
+mod_prereg <- broom.mixed::tidy(mod_prereg) %>% 
+  filter(p.value<0.05 & effect == "fixed") %>% 
+  select(-group)
+
+# intercept = correctly pronounced, non-cognate, to a monolingual
+
+```
+In all models, the intercept represents the overall average (across time) for monolingual participants hearing a correctly pronounced non-cognate.
+
+The preregistered model has some issues i.e. it tests 4-way interactions and has 32 fixed effects terms, as well as an over-fitting of the random effects (indicated by the singular fit). In an attempt to cut some of that complexity, I'm going to be trying a model looking only at cognates and non-cognates separately. 
+
+# Cognates and non-cognates
+```{r exploratory-gca}
+
+contrasts(data_binned$lang_group) <- c(-1, 1) # sum coding so the intercept is the grand mean and we get main effects instead of simple effects
+
+#cognates 
+mod_cognates <- lmer(elog ~ (ot1 + ot2 + ot3) * misp_cond * lang_group +
+                     ((ot1 + ot2 + ot3) | part_id:item_named),
+                   control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   data = data_binned %>% 
+                     filter(word_type == "cognate"), 
+                   REML = F)
+mod_cognates_no_ot_3 <- lmer(elog ~ (ot1 + ot2) * misp_cond * lang_group +
+                     ((ot1 + ot2) | part_id:item_named),
+                   control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   data = data_binned %>% 
+                     filter(word_type == "cognate"), 
+                   REML = F)
+
+anova_cog_ot3_good <- anova(mod_cognates_no_ot_3, mod_cognates) %>% broom::tidy() # leaving in the ot3 even though it's not significant (shrug emoji)
+summary(mod_cognates)
+# to do: check R2s for both
+sjPlot::tab_model(mod_cognates) #marginal r2 = 0.09, conditional r2 = 0.66
+
+#### non-cognates
+mod_noncognates <- lmer(elog ~ (ot1 + ot2 + ot3) * misp_cond * lang_group +
+                     ((ot1 + ot2 + ot3) | part_id:item_named),
+                   control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   data = data_binned %>% filter(word_type == "non-cognate"), 
+                   REML = F)
+
+mod_noncognates_simpler <- lmer(elog ~ (ot1 + ot2 + ot3)+ misp_cond + lang_group + 
+                                  ot1:misp_cond + ot2:misp_cond + ot3:misp_cond +
+                                  ot1:lang_group + ot2:lang_group + ot3:lang_group + 
+                                  lang_group:misp_cond +
+                     ((ot1 + ot2 + ot3)| part_id:item_named),
+                   control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   data = data_binned %>% filter(word_type == "non-cognate"), 
+                   REML = F)
+sjPlot::tab_model(mod_noncognates_simpler, wrap.labels = 80) #marginal r2 = 0.14, conditional r2 = 0.65
+
+noncog_simpler_better <- anova(mod_noncognates_simpler, mod_noncognates) %>% # nonsig = better without the 3-way ints
+tibble() %>% 
+  rename(pval = `Pr(>Chisq)`)
+
+summary(mod_cognates)
+# ot1 and 2 are sig: capturing the curve
+# main effect of MPs: less looking overall for MPs
+fig_cog_mp <- plot(ggeffects::ggpredict(mod_cognates, terms = c("misp_cond")), colors = "eight") 
+# ot2 by MP: rise less steep for MPs
+# ot1 by lang group: monolinguals look more
+fig_cog_ot1_by_lang <- plot(ggeffects::ggpredict(mod_cognates, terms = c("ot1", "lang_group")), colors = "eight") 
+# MP by lang group: bilinguals were more affected by the MPs than monolinguals
+fig_cog_mp_by_lang_group <- plot(ggeffects::ggpredict(mod_cognates, terms = c("lang_group", "misp_cond")), colors = "eight")
+  
+# 3-way: ot1:MP:lang group: slopes differed across mispronunciation conditions for monolinguals more than for bilinguals
+fig_cog_ot1_by_mp_by_lang <- plot(ggeffects::ggpredict(mod_cognates, terms = c("ot1", "misp_cond", "lang_group")), colors = "eight")
+
+
+summary(mod_noncognates_simpler)
+# now all three time polynomials are sig
+# main effect of MP: less looking at MPs
+fig_noncog_mp <- plot(ggeffects::ggpredict(mod_noncognates_simpler, terms = c("misp_cond")), colors = "eight") 
+# main effect of lang_group: bilinguals looked at the target less overall
+fig_noncog_lang_group <- plot(ggeffects::ggpredict(mod_noncognates_simpler, terms = c("lang_group")), colors = "eight") 
+# time x MP effect, meaning that the slope of the curve is moderated by pronunciation: slower for MPs for all 3 time terms
+fig_noncog_time_misp_cond <- plot(ggeffects::ggpredict(mod_noncognates_simpler, terms = c("ot3", "misp_cond")), colors = "eight")
+# MP x lang group effect, meaning that mispronunciations were differentially detected between two lang groups
+fig_noncog_mp_lang_group <- plot(ggeffects::ggpredict(mod_noncognates_simpler, terms = c("lang_group", "misp_cond")), colors = "eight")
+
+
+```
+After running the full model on both cognates and non-cognates, it became clear that the model was overly complex in the case of the non-cognates. Model comparison revealed that the three-way interactions I initially included were not I manually included all the two-way interactions in the non-cognate model because if I wrote the syntax more parsimoniously I ended up with fixed effects looking at the interactions of the time polynomials with each other, which I don't want for obvious reasons.
+
+# Biling cognate effect
+
+```{r biling-cognate-effect}
+bilings <- data_binned %>% 
+  filter(lang_group == "bilingual") %>% 
+  mutate(percent_english = percent_english-50)
+
+mod_bilings <- lmer(elog ~ (ot1+ot2+ot3) * word_type * misp_cond + 
+                      ((ot1 + ot2 + ot3)| part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = bilings)
+
+mod_bilings_simpler <- lmer(elog ~ (ot1+ot2+ot3) + word_type + misp_cond + 
+                              word_type:misp_cond +
+                              ot1:word_type + ot2:word_type + ot3:word_type +
+                              ot1:misp_cond + ot2:misp_cond + ot3:misp_cond +
+                      ((ot1 + ot2 + ot3)| part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = bilings)
+
+mod_bilings_simpler_no_ot3 <- lmer(elog ~ (ot1+ot2) + word_type + misp_cond + 
+                              word_type:misp_cond +
+                              ot1:word_type + ot2:word_type +
+                              ot1:misp_cond + ot2:misp_cond +
+                      ((ot1 + ot2)| part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = bilings)
+
+anova_bilings_ot3_good <- anova(mod_bilings_simpler_no_ot3, mod_bilings_simpler) %>% tidy()
+
+bilings_mod_simpler_better <- anova(mod_bilings_simpler, mod_bilings) %>% tibble() %>% 
+  rename(pval = `Pr(>Chisq)`)
+summary(mod_bilings_simpler)
+# only ot1 and ot2
+# cognate effect: more looking towards cognates overall
+fig_bilings_cog <- plot(ggeffects::ggpredict(mod_bilings_simpler, terms = c("word_type")), colors = "eight") 
+
+# cognate x MP interaction: bigger MP effect for cognates
+fig_bilings_cog_mp <- plot(ggeffects::ggpredict(mod_bilings_simpler, terms = c("word_type", "misp_cond")), colors = "eight") 
+
+# ot2 x MP interaction: looking increases more for correct words than MPs
+fig_bilings_ot2_mp <- plot(ggeffects::ggpredict(mod_bilings_simpler, terms = c("ot2", "misp_cond")), colors = "eight")
+
+# ot3 x MP: different for MPs
+fig_bilings_ot3_mp <- plot(ggeffects::ggpredict(mod_bilings_simpler, terms = c("ot3", "misp_cond")), colors = "eight")
+
+bilings$pred_lt <- predict(mod_bilings_simpler, bilings)
+
+biling_model_timecourse <- ggplot(data = bilings, aes(x = time, y = elog, colour = misp_cond)) +
+ stat_smooth(span = 0.2, alpha = 0.25) +
+  #stat_smooth(aes(y = pred_lt), linetype = "twodash", se = T) +
+  facet_grid(~word_type) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(-1,2)) +
+  ggtitle("Bilinguals only: MP effect in cognates and non-cognates",
+          subtitle = "Model predicted output from growth curve analysis")
+
+biling_model_timecourse_real <- ggplot(data = bilings, aes(x = time, y = elog, colour = misp_cond)) +
+  #stat_summary() +
+  stat_smooth() +
+  stat_smooth(aes(y = pred_lt), linetype = "twodash", se = F) +
+  scale_colour_brewer(palette = "Set2") +
+  facet_grid(~word_type) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(-1,2)) +
+  ggtitle("Bilinguals only: MP effect in cognates and non-cognates",
+          subtitle = "Model predicted output from Growth curve analysis")
+
+```
+
+#Monoling cognate effect
+
+```{r monoling-cognate-effect}
+monolings <- data_binned %>% 
+  filter(lang_group == "monolingual")
+
+mod_monolings <- lmer(elog ~ (ot1+ot2+ot3) * word_type * misp_cond + 
+                      ((ot1 + ot2 + ot3)| part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = monolings)
+
+mod_monolings_simpler <- lmer(elog ~ (ot1+ot2+ot3) + word_type + misp_cond + 
+                              word_type:misp_cond +
+                              ot1:word_type + ot2:word_type + ot3:word_type +
+                              ot1:misp_cond + ot2:misp_cond + ot3:misp_cond +
+                      ((ot1 + ot2 + ot3)| part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = monolings)
+
+monolings_mod_simpler_worse <- anova(mod_monolings_simpler, mod_monolings) %>% tibble() %>% 
+  rename(pval = `Pr(>Chisq)`)
+
+summary(mod_monolings)
+# sig time
+# nonsig cog effect (thank GOD)
+# sig MP effect
+# sig time x MP
+# marginal (i.e. nonsig) cog x MP
+# sig ot1:cog:MP effect: larger difference in slopes for non-cogs than for cogs, opposite of bilinguals
+fig_monolings_ot1_cog_mp <- plot(ggeffects::ggpredict(mod_monolings, terms = c("ot1", "misp_cond", "word_type")), colors = "eight")
+
+monolings$pred_lt <- predict(mod_monolings, monolings)
+
+monoling_model_timecourse <- ggplot(data = monolings, aes(x = time, y = elog, colour = misp_cond)) +
+  stat_smooth(span = 0.2, alpha = 0.25) +
+  stat_smooth(aes(y = pred_lt), linetype = "twodash", se = F) +
+  facet_grid(~word_type) +
+  theme_minimal() +
+  ggtitle("Monolinguals only: MP effect in cognates and non-cognates", 
+          subtitle = "Model predicted output from Growth curve analysis")
+
+biling_model_timecourse/monoling_model_timecourse 
+
+```
+
+# Vowel vs consonant MPs
+
+```{r vowels-vs-consonants, eval = F}
+
+summary(data_binned)
+
+data_binned
+
+mod_vowel_cons <- lmer(elog ~ misp_cond * misp_type + 
+       (1 | part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+     data = data_binned)
+
+summary(mod_vowel_cons)
+
+plot(ggeffects::ggpredict(mod_vowel_cons, terms = c("misp_type", "misp_cond")))
+```
+
+# Item level
+
+```{r item-level, eval = F}
+item_level_cognates <- ggplot(data_binned %>% filter(word_type == "cognate"), aes(x = misp_cond, y = prop, fill = item)) +
+  stat_summary(geom = "bar", position = "dodge", colour = "white", show.legend = F)+
+  stat_summary(geom =  "linerange", position = position_dodge(width = 0.9), show.legend = F) +
+  geom_hline(yintercept = 0.5, colour = "grey50") +
+  facet_grid(lang_group~target_item) +
+  ggtitle("item level looking - cognates") +
+  theme_bw()
+
+item_level_non_cognates <- ggplot(data_binned %>% filter(word_type == "non-cognate"), aes(x = misp_cond, y = prop, fill = item)) +
+  stat_summary(geom = "bar", position = "dodge", colour = "white", show.legend = F)+
+  stat_summary(geom = "linerange", position = position_dodge(width = 0.9), show.legend = F) +
+  geom_hline(yintercept = 0.5, colour = "grey50") +
+  scale_fill_brewer(palette = "Set2") +
+  facet_grid(lang_group~target_item) +
+  ggtitle("item level looking - non-cognates") +
+  theme_bw()
+
+item_level_cognates/item_level_non_cognates
+```
+
+```{r dominance}
+
+mod_bilings_simpler <- lmer(elog ~ (ot1+ot2+ot3) + word_type + misp_cond + 
+                              word_type:misp_cond +
+                              ot1:word_type + ot2:word_type + ot3:word_type +
+                              ot1:misp_cond + ot2:misp_cond + ot3:misp_cond +
+                      ((ot1 + ot2 + ot3)| part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = bilings)
+
+
+bilings %>% 
+  summarise(min(percent_english))
+
+# mod_bilings_with_dom <- lmer(elog ~ (ot1 + ot2 + ot3) * word_type + misp_cond + dominant_language + 
+#                               word_type:misp_cond +
+#                               ot1:word_type + ot2:word_type + ot3:word_type +
+#                               ot1:misp_cond + ot2:misp_cond + ot3:misp_cond +
+#                               ot1:dominant_language + ot2:dominant_language + ot3:dominant_language +
+#                               word_type:misp_cond:dominant_language +
+#                       ((ot1 + ot2 + ot3) | part_id:item_named),
+#                     control = lmerControl(optimizer="bobyqa"),
+#                    weights = weights,
+#                    REML = F,
+#                    data = bilings)
+
+mod_bilings_with_dom_continuous <- lmer(elog ~ (ot1 + ot2 + ot3) * word_type + misp_cond + percent_english + 
+                              word_type:misp_cond +
+                              ot1:word_type + ot2:word_type + ot3:word_type +
+                              ot1:misp_cond + ot2:misp_cond + ot3:misp_cond +
+                              ot1:percent_english + ot2:percent_english + ot3:percent_english +
+                              word_type:misp_cond:percent_english +
+                      ((ot1 + ot2 + ot3) | part_id:item_named),
+                    control = lmerControl(optimizer="bobyqa"),
+                   weights = weights,
+                   REML = F,
+                   data = bilings)
+
+summary(mod_bilings_with_dom_continuous)
+dom_helps <- anova(mod_bilings, mod_bilings_with_dom_continuous) %>% tibble() %>% janitor::clean_names()
+
+bilings$pred_lt_dom <- predict(mod_bilings_with_dom_continuous, bilings)
+
+```
+
+# Order effects?
+
+```{r order-effects}
+
+order_bin <- data_binned %>% 
+  mutate(first_trial = ifelse(order %in% c("E1", "E3"), "CP", "MP"))
+
+ggplot(order_bin, aes(x = time, y = elog, colour = misp_cond)) +
+  stat_smooth() +
+  facet_grid(lang_group~first_trial)
+
+order_effect <- lmer(elog ~ misp_cond * lang_group + first_trial + (1|part_id), 
+                     data = order_bin)
+  
+summary(order_effect)
+
+plot(ggeffects::ggpredict(order_effect, terms = c("misp_cond", "lang_group", "first_trial")))
+
+```

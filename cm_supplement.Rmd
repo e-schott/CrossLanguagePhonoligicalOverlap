@@ -1,0 +1,86 @@
+---
+title: "Supplemental Materials for _Bilingual toddlers’ sensitivity to mispronunciations is dependent on cross-language similarity_"
+shorttitle: "Supplemental Materials"
+author:
+  - name          : "Esther Schott"
+  - name          : "Charlotte Moore"
+  - name          : "Krista Byers-Heinlein"
+bibliography      : ["citations.bib"]
+class             : "man"
+header-includes   :
+  - \raggedbottom
+  - \usepackage{fontspec}
+  - \usepackage{lscape}
+output            : papaja::apa6_word
+      
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: sentence
+---
+```{r load-data, results='hide'}
+library(knitr)
+library(here)
+library(papaja)
+knit(here("scripts/cm4_eyetracking_analysis.Rmd"), quiet = TRUE)
+knit(here("scripts/cm5_pupillometry.Rmd"), quiet = TRUE)
+```
+
+
+## Correlations Between Looking to Target and Language Measures
+
+We pre-registered computing calculations between toddlers' average looking to target during the window of interest and the following measures, respectively: (1) exposure to English/French [@byers-heinleinMAPLEMultilingualApproach2020], (2) words produced in the English  and, if applicable, French CDI, and (3) language mixing score [@byers-heinleinParentalLanguageMixing2013]. The correlations can be seen in Table S1. The only measure that correlated significantly with average looking to target was the number of English words produced (`r apa_print(cor_cdi_english)$full_result`). This suggests that toddlers with a larger English vocabulary spent more time looking at the target. No other correlations were significant.  
+
+```{r cor-table}
+cor_table_supplementals %>% apa_table(caption = "Correlation between average looking to target and language measures. The number of words known in French was collected for bilinguals only, hence the smaller sample size, and the Language Mixing Score was only collected if the participant had some exposure to French. For some measures, we have missing values due to the caregiver not filling out the questionnaire.")
+```
+
+
+\newpage
+
+## Pupil Dilation ANOVA
+```{r missingness-numbers}
+# make pupillometry dataframe wide for easy access via $
+missingness_summary_wide = missingness_summary %>% pivot_wider(names_from = metric, values_from = before:removed_percent)
+```
+
+To analyze change in pupil size, we used the pupillometryR package [@forbesPupillometryRPackagePreparing2020] and followed the steps recommended for pupillometry [@siroisPupillometryWalkthrough2018]. We expected an increase in pupil size for mispronunciations compared to correct pronunciations, which should be more pronounced for bilingual compared to monolingual toddlers. 
+The window of analysis was pre-registered to start at the onset of the target word and end `r pupil_window_length` ms after.
+As the correlation between the left and right pupil size was high (r = `r round(pupil_size_correlation,2)`), in cases where pupil size for one eye only was available, we regressed the size of the missing pupil from the available side.
+We then calculated the average pupil size across both eyes, and downsampled the data to `r pupil_bin_size` ms time bins to smooth and make the size of the dataset more manageable.
+We removed trials with less than 750ms of usable data, which removed `r removed_by_pupillometry_r` trials or `r round(missingness_summary_wide$removed_percent_trials,1)`% of trials.
+Following this, we removed all participants who had less than 2 usable trials on each of the four trial types, which resulted in removing `r missingness_summary_wide$removed_participants` participants (`r round(missingness_summary_wide$removed_percent_participants,1)`% of participants).
+This resulted in a final sample for pupillometry analyses of `r pupil_sample$bilingual` bilingual and `r pupil_sample$monolingual` monolingual toddlers.
+We then filtered data to remove artifacts like implausibly fast pupil dilations using a Hanning filter.
+Data was then interpolated across blinks and other periods of missing data using a cubic interpolation.
+Finally, data were baseline-corrected using a baseline of `r baseline_length` ms before the onset of the target word, to remove variability in pupil sizes between participants and trials.
+
+Change in pupil size can be seen in Figure \@ref(fig:pupil-timeline).
+A 2 × 2 × 2 ANOVA with cognate status (cognate, non-cognate) and mispronunciation (correctly pronounced, mispronounced) as within-subject variables, and language background (monolingual, bilingual) as a between-subjects variable.
+The results can be seen in Table \@ref(tab:pupil-anova).
+Unlike for the looking time analysis, we found no main effect of mispronunciation (`r apa_pupillometry_anova$full_result$Mispronunciation`), indicating that toddlers' pupil size did not differ between correct and mispronounced trials.
+For the remaining main effects and interaction, we also found no statistically significant main effects or interactions (all ps \> `r apa_pupillometry_anova$table$p.value %>% min()`, see Table \@ref(tab:pupil-anova)).
+This suggests that pupil dilation was not associated with the mispronunciation or cognate status manipulation.
+We also conducted a separate ANOVA for bilingual toddlers only, to test whether there are effects present in bilinguals but not in monolinguals that the three-way ANOVA did not have the power to detect in a three-way interaction.
+We again found no statistically significant effect of mispronunciation (`r biling_pupil_anova$full_result$Mispronunciation`), or cognate status (`r biling_pupil_anova$full_result$Cognate_Status`), or interaction between the two (`r biling_pupil_anova$full_result$Mispronunciation_Cognate_Status`).
+This suggests that there were no effects of mispronunciation or cognate status on pupil size present in bilinguals specifically.
+
+
+```{r pupil-timeline,  fig.cap = "Pupil Dilation for Mispronounced and Correct Trials, by Group and Cognate Status"}
+knitr::include_graphics(path ="results/figures/cm_pupil_timeline.png")
+```
+
+\newpage
+
+```{r pupil-anova, echo=F, results='asis', warning=F, message=F}
+apa_table(
+  apa_pupillometry_anova$table 
+  , caption = "ANOVA with Change in Pupil Size as Dependent Variable"
+  
+)
+
+```
+
+\newpage
+
+# References

@@ -1,0 +1,410 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+# parameters  
+```{r}
+update_eye_data <- FALSE
+```
+
+
+# Data Preparation 
+## load packages
+
+```{r}
+library(lubridate)
+library(here)
+library(tidyverse)
+library(eyetrackingR)
+library(janitor)
+library(readxl)
+library(rio)
+library(zoo)
+library(anytime)
+library(tidylog)
+```
+
+## read eye data
+```{r}
+data <- readRDS(here("results", "processed_data", "cm_merged_eye_data.Rdata"))
+```
+
+## read participant info
+```{r}
+combined_info <- readRDS(here("results", "processed_data", "cm_participant_info.Rdata"))
+```
+
+
+
+
+## read information on images presented & AOIs
+```{r}
+# side of presentation for each object
+images <- read.csv(here("data", "trial_info", "trial_info.csv"))
+item_info <- read_excel(here("data", "trial_info", "item_info.xlsx"))
+# target AOI
+aoi_target <- read.csv(here("data", "trial_info", "aoi_target.csv"))
+# distractor AOI
+aoi_distractor <- read.csv(here("data", "trial_info", "aoi_distractor.csv"))
+```
+
+
+
+# work on participant info
+## create language group variable
+```{r}
+combined_info <- combined_info %>%
+  mutate(lang_group = case_when(
+    percent_english >= 90 ~ "monolingual",
+    percent_english >= 25 & percent_french >= 25 & percent_other < 10 ~ "bilingual",
+    TRUE ~ "none"
+  ))
+
+# very stupid graph to check that assignment is correct
+ggplot(combined_info, aes(
+  x = percent_english,
+  y = percent_french,
+  colour = lang_group
+)) +
+  geom_point() +
+  facet_grid(percent_other > 10 ~ .)
+
+combined_info %>%
+  group_by(lang_group) %>%
+  count()
+```
+
+## participant exclusion
+
+
+
+## premature birth
+```{r}
+combined_info <- combined_info %>%
+  mutate(exclude_premature = case_when(
+    gestation_weeks < 37 | gestation == "Prem" ~ 1,
+    weight_in_grams < 2500 ~ 1,
+    is.na(weight_in_grams) & is.na(gestation_weeks) ~ as.numeric(NA),
+    TRUE ~ 0
+  ))
+# noticed during code review: there is one kid (P19) getting NA for exclude premature, but I checked their demographics form and the parent answered "no" for being born early 
+# to fix this:
+combined_info = combined_info %>%
+  mutate(exclude_premature = ifelse(part_id == "P19", 0, exclude_premature))
+
+```
+
+## health 
+```{r}
+
+combined_info <- combined_info %>%
+  mutate(exclude_health = NA)
+
+
+combined_info %>%
+  distinct(health_comments, .keep_all = T) %>%
+  select(part_id, health_comments) %>%
+  write_csv(here("results", "processed_data", "to_check", "cm_health_to_check.csv"))
+
+
+health_comments_checked <- read_csv(here("results", "processed_data", "to_check", "cm_health_checked.csv"))
+
+# merge back into combined_info and create exclude_health variabl
+combined_info <- combined_info %>%
+  left_join(health_comments_checked %>% select(-health_comments)) %>%
+  mutate(exclude_health = ifelse(exclude_health_comments == FALSE | is.na(health_comments), 0, 1))
+```
+
+## language
+
+```{r}
+combined_info <- combined_info %>%
+  mutate(exclude_language = case_when(
+    lang_group == "none" ~ 1,
+    # participants who did not hear English from birth OR French from birth (ie. sequential bilinguals)
+    part_id %in% c("P22", "P68") ~ 1,
+    !is.na(lang_group) ~ 0,
+    TRUE ~ as.numeric(NA)
+  ))
+```
+
+
+
+
+
+## age
+```{r}
+combined_info <- combined_info %>%
+  mutate(
+    exclude_age = ifelse(between(age_months, 23, 33), 0, 1)
+  )
+```
+
+
+## overview of participant exclusions
+```{r}
+combined_info <- combined_info %>%
+  mutate(exclude_summary = case_when(
+    exclude_age == 1 ~ "1_age",
+    exclude_premature == 1 ~ "2_preterm",
+    exclude_health == 1 ~ "3_health",
+    exclude_language == 1 ~ "4_language",
+    TRUE ~ "keeper"
+  ))
+
+combined_info %>%
+  group_by(exclude_summary) %>%
+  count()
+```
+# keep only necessary variables for analysis
+```{r}
+combined_info <- combined_info %>%
+  select(
+    study, part_id, gender, percent_english, percent_french, percent_other, percent_dominant, percent_nondominant, dominant_language, exclude_summary, lang_group, age_days, age_months, child_ethnicity, years_education,
+    language_mixing_score, cdi_forms_filled_visit, cdi_responding_caregiver, cdi_vocab_production_en, cdi_vocab_production_fr
+  )
+```
+
+
+# eyetracking data prep
+
+## create necessary variables 
+### trial info from soundfile name etc. 
+```{r}
+
+
+data <- data %>% rename(
+  gaze_x = gaze_point_x_adc_spx,
+  gaze_y = gaze_point_y_adc_spx,
+  order = studio_test_name,
+  timestamp = recording_timestamp
+) ## Renaming the column
+
+
+data$trial_attg <- ifelse(startsWith(as.character(data$media_name), "Attentiongetter"),
+  "att",
+  "test"
+)
+data$trial_attg <- ifelse(data$media_name == "", "other", data$trial_attg) 
+
+
+data$movie_name <- ifelse(data$trial_attg == "test",
+  as.character(data$media_name),
+  ""
+)
+data$movie_name <- gsub(".avi", "", data$movie_name)
+# this throws error message because on attentiongetter trials it fails
+data <- data %>% separate(movie_name,
+  into = c(NA, "image", "audio", "order_trial"),
+  sep = "_",
+  remove = F
+)
+data$trial <- substr(data$order_trial, start = 3, stop = 5)
+data$trial_num <- as.numeric(substr(data$order_trial, start = 4, stop = 5))
+data$object_named <- substr(data$audio, 1, 3)
+# create trial type variables
+data$misp_cond <- substr(data$audio, 4, 4)
+data$word_type <- substr(as.character(data$image), 1, 1)
+data <- data %>%
+  mutate(
+    misp_cond = case_when(
+      substr(audio, 4, 4) == "C" ~ "correct",
+      substr(audio, 4, 4) == "M" ~ "mispronounced"
+    ),
+    word_type = case_when(
+      substr(as.character(data$image), 1, 1) == "n" ~ "non-cognate",
+      substr(as.character(data$image), 1, 1) == "c" ~ "cognate"
+    ),
+    trial_type = case_when(
+      misp_cond == "correct" & word_type == "non-cognate" ~ "correctly pronounced non-cognate",
+      misp_cond == "mispronounced" & word_type == "non-cognate" ~ "mispronounced non-cognate",
+      misp_cond == "correct" & word_type == "cognate" ~ "correctly pronounced cognate",
+      misp_cond == "mispronounced" & word_type == "cognate" ~ "mispronounced cognate"
+    )
+  )
+
+
+data$item <- substr(as.character(data$image), 1, 2)
+data$item_named <- paste0(data$item, data$object_named)
+```
+
+
+
+
+### add info on images presented & AOIS
+```{r}
+# change order labels from e1 to E1 for compability with eyetracking data
+images <- images %>% mutate(order = toupper(order))
+
+# add info on which image is being seen
+
+data <- full_join(data, images)
+```
+### add info on items
+```{r}
+data <- data %>% left_join(item_info %>% select(
+  item_named_full,
+  misp_type,
+  item_named
+))
+```
+
+
+#### check that matching worked correctly
+```{r}
+data <- data %>% mutate(
+  item_code = gsub("_", "", item_code),
+  matching_item = ifelse(item_code == image, "ok", "check")
+)
+# check that when there is a trial going on (trial_attg =="test"), all are "ok"
+data %>%
+  group_by(trial_attg, matching_item) %>%
+  count()
+```
+
+
+## dealing with track loss
+```{r}
+
+data <- data %>% mutate(
+  track_loss_reason =
+    case_when(
+      between(as.numeric(as.character(validity_right)), 1, 4) & between(as.numeric(as.character(validity_left)), 1, 4) ~ "validity is bad", 
+      is.na(gaze_x) | is.na(gaze_y) ~ "no info on coordinates",
+      gaze_x < 0 | gaze_x > 1920 ~ "outside of box", 
+      gaze_y < 0 | gaze_y > 1200 ~ "outside of box",
+      between(gaze_x, 0, 1920) ~ "",
+      between(gaze_y, 0, 1200) ~ "",
+      TRUE ~ "not sure"
+    ),
+  track_loss = ifelse(track_loss_reason != "", TRUE, FALSE)
+)
+data %>% tabyl(track_loss_reason)
+```
+
+
+## add AOI info
+```{r}
+
+# is target L or R?
+data <- data %>%
+  mutate(target_location = case_when(
+    object_named == image_left ~ "target_left",
+    object_named == image_right ~ "target_right",
+    TRUE ~ as.character(NA)
+  ))
+
+# add target aoi
+data <- add_aoi(data,
+  aoi_target,
+  x_col = "gaze_x",
+  y_col = "gaze_y",
+  aoi_name = "target"
+)
+# add distractor aoi
+data <- add_aoi(data,
+  aoi_distractor,
+  x_col = "gaze_x",
+  y_col = "gaze_y",
+  aoi_name = "distractor"
+)
+```
+
+
+## check that data are on the right coordinate system
+```{r}
+
+
+## Finalizing data
+
+
+# get rid of rows for attentiongetter &  where no video is presented
+# but want to keep row for part_id P76 who doesn't have eyetracking data so we keep this participant in stats about excluded participants
+data <- data %>% filter(
+  trial_attg != "att" | part_id == "P76",
+  !is.na(media_name) | part_id == "P76",
+  media_name != "" | part_id == "P76"
+)
+
+
+
+data$gaze_y <- (data$gaze_y - 1200) * -1 # Put Gaze_y on a cartesian coordinate system instead of Tobii system
+
+# the following code takes a bit to run
+# check that there are no outliers left ( all gaze points are y:0-1200 and y 0-1900)
+# with(data[data$track_loss==F,],     plot(gaze_x, gaze_y)) 
+```
+
+
+
+# combine eyetracking data with participant info
+## test merging to find mismatches
+```{r}
+missing_from_info <- anti_join(
+  data %>% distinct(part_id),
+  combined_info
+) %>% print()
+
+# one participant (P76) does not have eyetracking data, but added that one as a row on data, so doesn't show up here
+missing_from_eyetracker <- anti_join(
+  combined_info,
+  data %>% distinct(part_id)
+) %>% print()
+
+
+full_data <- left_join(data, combined_info)
+```
+# eyetracking data preprocessing
+## eyetrackingR preparations
+```{r}
+# delete duplicated rows (artifact introduced by tobii eyetracker)
+full_data_dup_removed <- full_data %>%
+  arrange(part_id, trial_num, timestamp, studio_event) %>%
+  distinct(part_id, trial_num, timestamp, .keep_all = T)
+
+data_eye_r <- make_eyetrackingr_data(full_data_dup_removed,
+  participant_column = "part_id",
+  trial_column = "trial_num",
+  time_column = "timestamp",
+  trackloss_column = "track_loss",
+  aoi_columns = c("target", "distractor"),
+  treat_non_aoi_looks_as_missing = TRUE
+)
+
+# check that every participant & trial has moviestart & movieend message
+full_data_dup_removed %>%
+  group_by(part_id, media_name, studio_event) %>%
+  count() %>%
+  spread(studio_event, n)
+```
+
+## rezero data
+```{r}
+# create a trial-specific timestamp (instead of timestamp relative to start of study)
+data_rezero <- subset_by_window(data_eye_r,
+  window_start_msg = "MovieStart",
+  window_end_msg = "MovieEnd",
+  msg_col = "studio_event",
+  rezero = T
+)
+
+data_rezero <- make_eyetrackingr_data(data_rezero,
+  participant_column = "part_id",
+  trial_column = "media_name",
+  time_column = "timestamp",
+  trackloss_column = "track_loss",
+  aoi_columns = c("target", "distractor"),
+  treat_non_aoi_looks_as_missing = TRUE
+)
+
+# add row for P76 back in so we can count this person in excluded participant summary in cm4
+data_rezero <- data_rezero %>%
+  full_join(data_eye_r %>% filter(part_id == "P76"))
+```
+
+# save data for further analysis
+```{r}
+saveRDS(data_rezero, here("results", "processed_data", "preprocessed_eye_data.Rdata"))
+```
