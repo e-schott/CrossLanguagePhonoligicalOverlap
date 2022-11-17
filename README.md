@@ -1,4 +1,9 @@
-# Readme for "Banana and banane: Cross-language phonological overlap supports bilingual toddlers’ word representations"
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![preprint](https://img.shields.io/badge/preprint-https%3A%2F%2Fosf.io%2Fhgdvq%2F-orange)](https://osf.io/hgdvq/)
+[![materials](https://img.shields.io/badge/materials-https%3A%2F%2Fosf.io%2Fn9uv4%2F-blue)](https://osf.io/n9uv4/)
+
+
+# Readme for "Banana and *banane*: Cross-language phonological overlap supports bilingual toddlers’ word representations"
 
 Created by Esther Schott and Charlotte Moore
 
