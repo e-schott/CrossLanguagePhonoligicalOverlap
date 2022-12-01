@@ -5,7 +5,7 @@
 
 # Readme for "Banana and *banane*: Cross-language phonological overlap supports bilingual toddlers’ word representations"
 
-Created by Esther Schott and Charlotte Moore
+Created by [Esther Schott](https://github.com/e-schott) and [Charlotte Moore](https://github.com/CharlotteMoore927)
 
 You can find the associated OSF project, including the stimuli used in the studies, at: [OSF LINK](https://osf.io/n9uv4/)
 
